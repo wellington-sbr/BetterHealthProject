@@ -1,0 +1,35 @@
+name: Generate Checklist
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # This allows for manual triggering
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install matplotlib pandas numpy
+
+    - name: Generate checklist
+      run: python generate_checksheet.py
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: checklist
+        path: artifacts/
+        retention-days: 90
