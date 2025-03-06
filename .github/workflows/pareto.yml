@@ -5,12 +5,16 @@ permissions:
   issues: read  # This grants access to issue data
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  schedule:
+    
+cron: "0 12 * * 1"  # Runs every Monday at 12 PM UTC
+push:
+  branches:
+main
+pull_request:
+  branches:
+main
+workflow_dispatch:  # Allows manual triggering
 
 jobs:
   pareto_analysis:
