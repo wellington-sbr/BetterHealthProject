@@ -27,7 +27,6 @@ def generate_check_sheet():
         'Interfaz': [1, 0, 1, 1],
         'Rendimiento': [0, 1, 1, -1]
     }
-
     # Crear una figura con subgráficos para cada categoría
     fig, axes = plt.subplots(len(categorias), 1, figsize=(10, 3 * len(categorias)))
     fig.suptitle('Hoja de Verificación de Calidad del Proyecto', fontsize=16)
