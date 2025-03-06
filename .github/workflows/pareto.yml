@@ -1,0 +1,68 @@
+name: Pareto Analysis
+
+permissions:
+  contents: write
+  issues: read  # This grants access to issue data
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"  # Runs every Monday at 12 PM UTC
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  pareto_analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas matplotlib requests
+
+      # Step 4: Run Pareto analysis script
+      - name: Run Pareto analysis script
+        run: |
+          python .github/scripts/pareto.py
+
+      # Step 5: Check if Pareto chart is generated
+      - name: Check if Pareto chart is generated
+        run: |
+          if [ -f "pareto_chart.png" ]; then echo "Pareto chart generated"; else echo "Pareto chart not found"; fi
+
+      # Step 6: Upload Pareto chart
+      - name: Upload Pareto chart
+        uses: actions/upload-artifact@v4
+        with:
+          name: pareto-chart
+          path: pareto_chart.png
+
+      # Step 7: Check for changes before committing
+      - name: Check for changes before committing
+        run: |
+          git diff --exit-code || echo "Changes detected"
+
+      # Step 8: Commit and push chart
+      - name: Commit and push chart
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add pareto_chart.png
+          git commit -m 'Add generated Pareto chart' || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }} || echo "No changes to push"
