@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 
-url = "https://api.github.com/repos/ainhprzz/BetterHealthProject/issues?title=" 
+url = "https://api.github.com/repos/DiogoPires2003/JoinProject/issues?title="
 conventional_commit_pattern = r"^(feat|fix|docs|chore|style|refactor|test|build|ci|perf|merge|revert|workflow|types|wip):"
 
 response = requests.get(url)
