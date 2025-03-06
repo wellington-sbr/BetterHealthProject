@@ -22,10 +22,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install matplotlib pandas numpy requests prettytable
+        pip install requests prettytable
 
     - name: Generate checklist
-      run: python .github/scripts/generate_checksheet.py
+      run: |
+        export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+        python .github/scripts/checksheet.py
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2

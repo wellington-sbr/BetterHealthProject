@@ -1,24 +1,24 @@
+import os
 import requests
 import datetime
 import calendar
 import json
-import os
 from prettytable import PrettyTable
 from collections import defaultdict
 
-
 class DevOpsChecklist:
-    def __init__(self, token, repo_owner, repo_name):
-        self.token = token
+    def __init__(self, repo_owner, repo_name):
+        self.token = os.getenv('GITHUB_TOKEN')
         self.repo_owner = repo_owner
         self.repo_name = repo_name
         self.headers = {
-            'Authorization': f'token {token}',
+            'Authorization': f'token {self.token}',
             'Accept': 'application/vnd.github.v3+json'
         }
         self.base_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}'
         self.devops_labels = self.get_devops_labels()
         self.monthly_data = {}  # Store data for each month
+
 
     def get_devops_labels(self):
         """Get DevOps related labels from GitHub repository"""
