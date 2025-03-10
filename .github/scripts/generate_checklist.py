@@ -28,6 +28,36 @@ else:
     print("Warning: No GITHUB_TOKEN provided. Using unauthenticated requests (limited rate).")
 
 
+def create_devops_labels():
+    """Create default DevOps labels if they don't exist"""
+    default_labels = [
+        {"name": "Plan", "color": "0052cc", "description": "Planning phase tasks"},
+        {"name": "Code", "color": "006b75", "description": "Coding phase tasks"},
+        {"name": "Build", "color": "ff9f1c", "description": "Build phase tasks"},
+        {"name": "Test", "color": "e99695", "description": "Testing phase tasks"},
+        {"name": "Release", "color": "bfd4f2", "description": "Release phase tasks"},
+        {"name": "Deploy", "color": "7057ff", "description": "Deployment phase tasks"},
+        {"name": "Operate", "color": "008672", "description": "Operation phase tasks"},
+        {"name": "Monitor", "color": "d73a4a", "description": "Monitoring phase tasks"},
+    ]
+
+    for label in default_labels:
+        try:
+            response = requests.post(
+                f"{GITHUB_API_URL}/labels",
+                headers=headers,
+                json=label
+            )
+            if response.status_code == 201:
+                print(f"Label '{label['name']}' created successfully.")
+            elif response.status_code == 422:
+                print(f"Label '{label['name']}' already exists.")
+            else:
+                print(f"Failed to create label '{label['name']}'. Status code: {response.status_code}")
+        except Exception as e:
+            print(f"Error creating label '{label['name']}': {e}")
+
+
 def get_devops_phases():
     """Get DevOps phases from GitHub labels"""
     try:
@@ -168,6 +198,9 @@ def generate_monthly_checklist():
     now = datetime.now()
     year = now.year
     month = now.month
+
+    # Create DevOps labels if they don't exist
+    create_devops_labels()
 
     # Generate checklist data
     checklist_data = generate_month_checklist(year, month)
