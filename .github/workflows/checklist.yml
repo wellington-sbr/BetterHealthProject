@@ -1,47 +1,36 @@
-name: Monthly DevOps Checklist
+name: Generate Better Health Checklist
 
 on:
-  schedule:
-    # Ejecutar el primer día de cada mes a las 00:00 UTC
-    - cron: '0 0 1 * *'
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
-    # Permitir ejecución manual
 
 jobs:
   generate-checklist:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests pyyaml
-      
-      - name: Generate monthly checklist
-        run: python generate_checklist.py
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Commit and push checklist files
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          
-          # Obtener año y mes actuales
-          YEAR=$(date +"%Y")
-          MONTH=$(date +"%m")
-          
-          # Agregar archivos generados
-          git add devops_checklist_${YEAR}_${MONTH}.yml
-          git add devops_checklist_${YEAR}_${MONTH}.md
-          
-          # Commit y push solo si hay cambios
-          git diff --staged --quiet || (git commit -m "Generar DevOps Checklist para ${YEAR}-${MONTH}" && git push)
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Generate health checklist
+      run: python .github/scripts/generate_checklist.py
+
+    - name: Upload checklist artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: health-checklist
+        path: ./health_checklist.md
+        if-no-files-found: error
