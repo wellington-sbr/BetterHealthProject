@@ -23,12 +23,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install pyyaml requests
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Generate health checklist
-      run: |
-        cd $GITHUB_WORKSPACE
-        python .github/scripts/generate_checklist.py
+      run: python .github/scripts/generate_checklist.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload checklist artifact
       uses: actions/upload-artifact@v3

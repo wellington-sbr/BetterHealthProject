@@ -1,31 +1,93 @@
 import os
+import requests
+from datetime import datetime, timedelta
 import calendar
 import yaml
-from datetime import datetime, timedelta
+import json
+import sys
+
+# Configuration from environment variables
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY", "")  # This env var is set by GitHub Actions
+
+# If not running in Actions, allow fallback for local development
+if not GITHUB_REPOSITORY:
+    GITHUB_REPOSITORY = "usuario/repositorio"  # Only used if not running in GitHub Actions
+    print("Warning: GITHUB_REPOSITORY not found. Using default value for local development.")
+
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPOSITORY}"
+
+# Headers for GitHub API
+headers = {}
+if GITHUB_TOKEN:
+    headers["Authorization"] = f"token {GITHUB_TOKEN}"
+    headers["Accept"] = "application/vnd.github.v3+json"
+else:
+    # We can still make some unauthenticated requests, with lower rate limits
+    headers["Accept"] = "application/vnd.github.v3+json"
+    print("Warning: No GITHUB_TOKEN provided. Using unauthenticated requests (limited rate).")
 
 
 def get_devops_phases():
-    """Obtener las fases predeterminadas de DevOps"""
-    # Usar un conjunto predeterminado de fases DevOps
-    devops_phases = [
-        "Plan", "Code", "Build", "Test",
-        "Release", "Deploy", "Operate", "Monitor"
-    ]
+    """Get DevOps phases from GitHub labels"""
+    try:
+        response = requests.get(f"{GITHUB_API_URL}/labels", headers=headers)
+        response.raise_for_status()
 
-    return devops_phases
+        # Filter only DevOps-related labels
+        all_labels = response.json()
+        devops_labels = [label["name"] for label in all_labels if "devops" in label["name"].lower()]
+
+        # If no specific DevOps labels, use default set
+        if not devops_labels:
+            devops_labels = [
+                "Plan", "Code", "Build", "Test",
+                "Release", "Deploy", "Operate", "Monitor"
+            ]
+
+        return devops_labels
+    except Exception as e:
+        print(f"Error fetching GitHub labels: {e}")
+        # Return default phases in case of error
+        return [
+            "Plan", "Code", "Build", "Test",
+            "Release", "Deploy", "Operate", "Monitor"
+        ]
+
+
+def get_completed_issues_by_week(phase, start_date, end_date):
+    """Get completed issues for a phase in date range"""
+    try:
+        # Format dates for GitHub API
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+
+        # Query closed issues with specific label in date range
+        query = f"repo:{GITHUB_REPOSITORY} label:\"{phase}\" closed:{start_date_str}..{end_date_str}"
+        response = requests.get(
+            "https://api.github.com/search/issues",
+            headers=headers,
+            params={"q": query}
+        )
+        response.raise_for_status()
+
+        return response.json()["total_count"]
+    except Exception as e:
+        print(f"Error fetching issues for {phase}: {e}")
+        return 0
 
 
 def generate_month_checklist(year, month):
-    """Generar datos de checklist para un mes específico"""
-    # Obtener fases de DevOps
+    """Generate checklist data for a specific month"""
+    # Get DevOps phases
     devops_phases = get_devops_phases()
 
-    # Calcular fechas para las semanas del mes
+    # Calculate dates for weeks in month
     first_day = datetime(year, month, 1)
     _, last_day_num = calendar.monthrange(year, month)
     last_day = datetime(year, month, last_day_num)
 
-    # Dividir el mes en 4 semanas (aproximadamente)
+    # Divide month into 4 weeks (approximately)
     days_in_month = (last_day - first_day).days + 1
     days_per_week = days_in_month // 4
 
@@ -33,37 +95,40 @@ def generate_month_checklist(year, month):
     for i in range(4):
         start = first_day + timedelta(days=(i * days_per_week))
         end = first_day + timedelta(days=((i + 1) * days_per_week) - 1)
-        if i == 3:  # Para la última semana, asegurarse de que incluya el último día
+        if i == 3:  # For last week, ensure it includes last day
             end = last_day
         weeks.append((start, end))
 
-    # Crear estructura del checklist
+    # Create checklist structure
     checklist_data = {
         "month": datetime(year, month, 1).strftime('%B %Y'),
         "phases": {}
     }
 
-    # Crear datos para cada fase con valores iniciales
+    # Get data for each phase
     for phase in devops_phases:
         phase_data = {
             "week1": {
                 "completed": False,
-                "issues_count": 0
+                "issues_count": get_completed_issues_by_week(phase, weeks[0][0], weeks[0][1])
             },
             "week2": {
                 "completed": False,
-                "issues_count": 0
+                "issues_count": get_completed_issues_by_week(phase, weeks[1][0], weeks[1][1])
             },
             "week3": {
                 "completed": False,
-                "issues_count": 0
+                "issues_count": get_completed_issues_by_week(phase, weeks[2][0], weeks[2][1])
             },
             "week4": {
                 "completed": False,
-                "issues_count": 0
-            },
-            "total_issues": 0
+                "issues_count": get_completed_issues_by_week(phase, weeks[3][0], weeks[3][1])
+            }
         }
+
+        # Calculate total issues
+        total_issues = sum([phase_data[f"week{i + 1}"]["issues_count"] for i in range(4)])
+        phase_data["total_issues"] = total_issues
 
         checklist_data["phases"][phase] = phase_data
 
@@ -71,19 +136,19 @@ def generate_month_checklist(year, month):
 
 
 def save_checklist_to_yaml(checklist_data, output_file):
-    """Guardar datos del checklist en formato YAML"""
+    """Save checklist data in YAML format"""
     with open(output_file, 'w') as file:
         yaml.dump(checklist_data, file, default_flow_style=False)
-    print(f"Checklist guardado en {output_file}")
+    print(f"Checklist saved to {output_file}")
 
 
 def generate_markdown_table(checklist_data):
-    """Generar tabla de markdown para visualizar el checklist"""
+    """Generate markdown table to visualize checklist"""
     month = checklist_data["month"]
     phases = checklist_data["phases"]
 
     markdown = f"# DevOps Checklist - {month}\n\n"
-    markdown += "| Fase | Semana 1 | Semana 2 | Semana 3 | Semana 4 | Total Issues |\n"
+    markdown += "| Phase | Week 1 | Week 2 | Week 3 | Week 4 | Total Issues |\n"
     markdown += "|------|---------|---------|---------|---------|-------------|\n"
 
     for phase, data in phases.items():
@@ -99,28 +164,31 @@ def generate_markdown_table(checklist_data):
 
 
 def generate_monthly_checklist():
-    """Función principal para generar checklist del mes actual"""
+    """Main function to generate current month's checklist"""
     now = datetime.now()
     year = now.year
     month = now.month
 
-    # Generar datos del checklist
+    # Generate checklist data
     checklist_data = generate_month_checklist(year, month)
 
-    # Guardar en YAML
-    output_file = f"devops_checklist_{year}_{month:02d}.yml"
+    # Save to YAML
+    output_file = "devops_checklist.yml"
     save_checklist_to_yaml(checklist_data, output_file)
 
-    # Generar markdown para visualización
+    # Generate markdown for visualization
     markdown = generate_markdown_table(checklist_data)
-    markdown_file = "health_checklist.md"
-    with open(markdown_file, 'w') as file:
+    with open("health_checklist.md", 'w') as file:
         file.write(markdown)
 
-    print(f"Markdown guardado en {markdown_file}")
-
+    print(f"Health checklist generated at health_checklist.md")
     return checklist_data
 
 
 if __name__ == "__main__":
+    # Script can run without token in GitHub Actions for basic functionality
+    if not GITHUB_TOKEN and not os.environ.get("GITHUB_ACTIONS"):
+        print("Warning: GITHUB_TOKEN not set. Some functionality will be limited.")
+        print("For full functionality: export GITHUB_TOKEN=ghp_abc123...")
+
     generate_monthly_checklist()
