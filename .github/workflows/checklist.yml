@@ -26,7 +26,9 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Generate health checklist
-      run: python .github/scripts/generate_checklist.py
+      run: |
+        cd $GITHUB_WORKSPACE
+        python .github/scripts/generate_checklist.py
 
     - name: Upload checklist artifact
       uses: actions/upload-artifact@v3
