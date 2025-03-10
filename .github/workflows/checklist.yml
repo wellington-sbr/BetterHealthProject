@@ -26,7 +26,7 @@ jobs:
           pip install requests pyyaml
       
       - name: Generate monthly checklist
-        run: python generate_checklist.py
+        run: python checklist.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
