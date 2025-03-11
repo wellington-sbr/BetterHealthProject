@@ -1,0 +1,57 @@
+name: Runchart Analysis
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"  # Se ejecuta cada lunes a las 00:00 UTC
+  workflow_dispatch:  # Permite ejecución manual
+
+permissions:
+  contents: write
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clonar el repositorio
+        uses: actions/checkout@v4
+
+      - name: 🌍 Instalar localización en español
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y locales
+          sudo locale-gen es_ES.UTF-8
+          sudo update-locale LANG=es_ES.UTF-8
+          export LANG=es_ES.UTF-8
+          export LC_ALL=es_ES.UTF-8
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: 📦 Instalar dependencias
+        run: pip install requests matplotlib
+
+      - name: 📊 Ejecutar el script de generación de gráficos
+        run: python .github/scripts/runchart.py  # Ajusta la ruta si es necesario
+
+      - name: 📂 Mover gráficos a la carpeta reports/
+        run: |
+          mkdir -p reports
+           mv grafico_historial/*/*.png reports/
+
+      - name: 📝 Hacer commit y push de los gráficos
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add reports/
+          git commit -m "📊 Actualizar gráficos de issues - Semana $(date +'%V %B')" || echo "Sin cambios para commitear"
+          git push
+        continue-on-error: true
+
+      - name: 📤 Subir gráficos como artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-images
+          path: reports/
