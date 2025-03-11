@@ -12,7 +12,7 @@ on:
     types: [closed]  # Run when issues are closed
   push:
     branches:
-      - master
+      - main
 
 jobs:
   generate-check-sheet:
