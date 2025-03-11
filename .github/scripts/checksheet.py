@@ -2,9 +2,12 @@ import os
 import requests
 from datetime import datetime, timedelta
 import calendar
-import yaml
 import json
 import sys
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 # Configuration from environment variables
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
@@ -21,15 +24,12 @@ GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPOSITORY}"
 headers = {}
 if GITHUB_TOKEN:
     headers["Authorization"] = f"token {GITHUB_TOKEN}"
-    headers["Accept"] = "application/vnd.github.v3+json"
+    headers["Accept"] = "application/vnd.github.v4+json"
 else:
     # We can still make some unauthenticated requests, with lower rate limits
-    headers["Accept"] = "application/vnd.github.v3+json"
+    headers["Accept"] = "application/vnd.github.v4+json"
     print("Warning: No GITHUB_TOKEN provided. Using unauthenticated requests (limited rate).")
 
-
-
-'''
 def create_devops_labels():
     """Create default DevOps labels if they don't exist"""
     default_labels = [
@@ -59,13 +59,6 @@ def create_devops_labels():
         except Exception as e:
             print(f"Error creating label '{label['name']}': {e}")
 
-'''
-
-labels_colors = {
-    "Plan": "5319e7", "Code": "0075ca", "Build": "0e8a16", "Test": "d93f0b",
-    "Release": "fbca04", "Deploy": "1d76db", "Operate": "0052cc", "Monitor": "5319e7"
-}
-''''''
 def get_devops_phases():
     """Get DevOps phases from GitHub labels"""
     try:
@@ -74,7 +67,9 @@ def get_devops_phases():
 
         # Filter only DevOps-related labels
         all_labels = response.json()
-        devops_labels = [label["name"] for label in all_labels if "devops" in label["name"].lower()]
+        devops_labels = [label["name"] for label in all_labels if label["name"] in [
+            "Plan", "Code", "Build", "Test", "Release", "Deploy", "Operate", "Monitor"
+        ]]
 
         # If no specific DevOps labels, use default set
         if not devops_labels:
@@ -91,7 +86,6 @@ def get_devops_phases():
             "Plan", "Code", "Build", "Test",
             "Release", "Deploy", "Operate", "Monitor"
         ]
-
 
 def get_completed_issues_by_week(phase, start_date, end_date):
     """Get completed issues for a phase in date range"""
@@ -113,7 +107,6 @@ def get_completed_issues_by_week(phase, start_date, end_date):
     except Exception as e:
         print(f"Error fetching issues for {phase}: {e}")
         return 0
-
 
 def generate_month_checklist(year, month):
     """Generate checklist data for a specific month"""
@@ -172,60 +165,107 @@ def generate_month_checklist(year, month):
 
     return checklist_data
 
-
-def save_checklist_to_yaml(checklist_data, output_file):
-    """Save checklist data in YAML format"""
+def save_checklist_to_json(checklist_data, output_file="checksheet_data.json"):
+    """Save checklist data in JSON format"""
     with open(output_file, 'w') as file:
-        yaml.dump(checklist_data, file, default_flow_style=False)
+        json.dump(checklist_data, file, indent=2)
     print(f"Checklist saved to {output_file}")
 
-
-def generate_markdown_table(checklist_data):
-    """Generate markdown table to visualize checklist"""
+def generate_check_sheet_png(checklist_data):
+    """Generate PNG visualization of the check sheet data as a table with checkboxes"""
     month = checklist_data["month"]
     phases = checklist_data["phases"]
+    
+    # Create a pandas DataFrame for visualization
+    data = []
+    for phase, phase_data in phases.items():
+        row = {
+            'Phase': phase,
+            'Week 1': phase_data['week1']['issues_count'],
+            'Week 2': phase_data['week2']['issues_count'],
+            'Week 3': phase_data['week3']['issues_count'],
+            'Week 4': phase_data['week4']['issues_count'],
+            'Total': phase_data['total_issues']
+        }
+        data.append(row)
+    
+    df = pd.DataFrame(data)
+    
+    # Set up the figure with appropriate size
+    plt.figure(figsize=(10, 6))
+    
+    # Hide axes
+    ax = plt.gca()
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    
+    # Create table
+    cell_text = []
+    for _, row in df.iterrows():
+        cell_row = []
+        for col in ['Phase', 'Week 1', 'Week 2', 'Week 3', 'Week 4', 'Total']:
+            if col == 'Phase':
+                cell_row.append(row[col])
+            elif col == 'Total':
+                cell_row.append(str(row[col]))
+            else:
+                # Add checkbox representation based on issue count
+                count = row[col]
+                cell_row.append(f"{count}")
+        cell_text.append(cell_row)
+    
+    # Table colors
+    colors = []
+    for i in range(len(df)):
+        row_colors = ['#f8f9fa']  # Light gray for phase column
+        for week in ['Week 1', 'Week 2', 'Week 3', 'Week 4']:
+            # Use lighter background for all cells
+            row_colors.append('#ffffff')
+        row_colors.append('#f2f2f2')  # Light gray for total column
+        colors.append(row_colors)
+    
+    # Create and customize table
+    table = ax.table(
+        cellText=cell_text,
+        colLabels=['Phase', 'Week 1', 'Week 2', 'Week 3', 'Week 4', 'Total Issues'],
+        loc='center',
+        cellLoc='center',
+        cellColours=colors
+    )
+    
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1, 1.5)  # Adjust table scale
+    
+    # Set title
+    plt.title(f'DevOps Check Sheet - {month}', fontsize=16, pad=20)
+    
+    # Adjust layout and save
+    plt.tight_layout()
+    plt.savefig('checksheet_table.png', dpi=300, bbox_inches='tight')
+    
+    print("Check sheet visualization generated: checksheet_table.png")
 
-    markdown = f"# DevOps Checklist - {month}\n\n"
-    markdown += "| Phase | Week 1 | Week 2 | Week 3 | Week 4 | Total Issues |\n"
-    markdown += "|------|---------|---------|---------|---------|-------------|\n"
-
-    for phase, data in phases.items():
-        week1 = "✅" if data["week1"]["completed"] else "⬜"
-        week2 = "✅" if data["week2"]["completed"] else "⬜"
-        week3 = "✅" if data["week3"]["completed"] else "⬜"
-        week4 = "✅" if data["week4"]["completed"] else "⬜"
-        total = data["total_issues"]
-
-        markdown += f"| {phase} | {week1} ({data['week1']['issues_count']}) | {week2} ({data['week2']['issues_count']}) | {week3} ({data['week3']['issues_count']}) | {week4} ({data['week4']['issues_count']}) | {total} |\n"
-
-    return markdown
-
-
-def generate_monthly_checklist():
-    """Main function to generate current month's checklist"""
+def main():
+    # Get current month and year
     now = datetime.now()
     year = now.year
     month = now.month
 
     # Create DevOps labels if they don't exist
-    #create_devops_labels()
-    get_devops_phases()
-
+    create_devops_labels()
+    
     # Generate checklist data
     checklist_data = generate_month_checklist(year, month)
-
-    # Save to YAML
-    output_file = "devops_checklist.yml"
-    save_checklist_to_yaml(checklist_data, output_file)
-
-    # Generate markdown for visualization
-    markdown = generate_markdown_table(checklist_data)
-    with open("health_checklist.md", 'w') as file:
-        file.write(markdown)
-
-    print(f"Health checklist generated at health_checklist.md")
-    return checklist_data
-
+    
+    # Save to JSON
+    save_checklist_to_json(checklist_data)
+    
+    # Generate PNG visualization
+    generate_check_sheet_png(checklist_data)
+    
+    print("Check sheet generation complete")
 
 if __name__ == "__main__":
     # Script can run without token in GitHub Actions for basic functionality
@@ -233,4 +273,4 @@ if __name__ == "__main__":
         print("Warning: GITHUB_TOKEN not set. Some functionality will be limited.")
         print("For full functionality: export GITHUB_TOKEN=ghp_abc123...")
 
-    generate_monthly_checklist()
+    main()
