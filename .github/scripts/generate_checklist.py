@@ -28,6 +28,8 @@ else:
     print("Warning: No GITHUB_TOKEN provided. Using unauthenticated requests (limited rate).")
 
 
+
+'''
 def create_devops_labels():
     """Create default DevOps labels if they don't exist"""
     default_labels = [
@@ -57,7 +59,13 @@ def create_devops_labels():
         except Exception as e:
             print(f"Error creating label '{label['name']}': {e}")
 
+'''
 
+labels_colors = {
+    "Plan": "5319e7", "Code": "0075ca", "Build": "0e8a16", "Test": "d93f0b",
+    "Release": "fbca04", "Deploy": "1d76db", "Operate": "0052cc", "Monitor": "5319e7"
+}
+''''''
 def get_devops_phases():
     """Get DevOps phases from GitHub labels"""
     try:
@@ -200,7 +208,8 @@ def generate_monthly_checklist():
     month = now.month
 
     # Create DevOps labels if they don't exist
-    create_devops_labels()
+    #create_devops_labels()
+    get_devops_phases()
 
     # Generate checklist data
     checklist_data = generate_month_checklist(year, month)
