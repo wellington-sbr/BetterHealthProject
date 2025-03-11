@@ -1,4 +1,4 @@
-name: DevOps Check Sheet Generator
+name: DevOps Check Sheet Analysis
 
 permissions:
   contents: write
