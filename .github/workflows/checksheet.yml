@@ -1,0 +1,56 @@
+name: DevOps Check Sheet Generator
+
+permissions:
+  contents: write
+  issues: read
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # Run on the 1st of every month
+  workflow_dispatch:  # Allow manual triggering
+  issues:
+    types: [closed]  # Run when issues are closed
+  push:
+    branches:
+      - master
+
+jobs:
+  generate-check-sheet:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests matplotlib seaborn pandas numpy
+      
+      - name: Run check sheet generator
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          python .github/scripts/checksheet.py
+      
+      - name: Print JSON data
+        run: |
+          cat checksheet_data.json
+      
+      - name: Check if files were generated
+        run: |
+          if [ -f "checksheet_data.json" ]; then echo "JSON data generated"; else echo "JSON data not found"; fi
+          if [ -f "checksheet_table.png" ]; then echo "Table image generated"; else echo "Table image not found"; fi
+      
+      - name: Commit and push generated files
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add checksheet_data.json checksheet_table.png
+          git commit -m "Update DevOps Check Sheet for $(date +'%B %Y')" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }} || echo "No changes to push"
