@@ -103,7 +103,7 @@
       },
       "week2": {
         "completed": false,
-        "issues_count": 0
+        "issues_count": 4
       },
       "week3": {
         "completed": false,
@@ -113,7 +113,7 @@
         "completed": false,
         "issues_count": 0
       },
-      "total_issues": 0
+      "total_issues": 4
     },
     "Release": {
       "week1": {
