@@ -36,7 +36,7 @@ jobs:
           python .github/scripts/checksheet.py
 
       - name: Upload diagram as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: devops-checksheet
           path: checksheet_*.png
