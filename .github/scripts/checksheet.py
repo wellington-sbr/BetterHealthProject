@@ -165,17 +165,12 @@ def generate_month_checklist(year, month):
 
     return checklist_data
 
-def save_checklist_to_json(checklist_data, output_file="checksheet_data.json"):
-    """Save checklist data in JSON format"""
-    with open(output_file, 'w') as file:
-        json.dump(checklist_data, file, indent=2)
-    print(f"Checklist saved to {output_file}")
 
 def generate_check_sheet_png(checklist_data):
     """Generate PNG visualization of the check sheet data as a table with checkboxes"""
     month = checklist_data["month"]
     phases = checklist_data["phases"]
-    
+
     # Create a pandas DataFrame for visualization
     data = []
     for phase, phase_data in phases.items():
@@ -188,17 +183,17 @@ def generate_check_sheet_png(checklist_data):
             'Total': phase_data['total_issues']
         }
         data.append(row)
-    
+
     df = pd.DataFrame(data)
-    
+
     # Set up the figure with appropriate size
     plt.figure(figsize=(10, 6))
-    
+
     # Hide axes
     ax = plt.gca()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
-    
+
     # Create table
     cell_text = []
     for _, row in df.iterrows():
@@ -213,7 +208,7 @@ def generate_check_sheet_png(checklist_data):
                 count = row[col]
                 cell_row.append(f"{count}")
         cell_text.append(cell_row)
-    
+
     # Table colors
     colors = []
     for i in range(len(df)):
@@ -223,7 +218,7 @@ def generate_check_sheet_png(checklist_data):
             row_colors.append('#ffffff')
         row_colors.append('#f2f2f2')  # Light gray for total column
         colors.append(row_colors)
-    
+
     # Create and customize table
     table = ax.table(
         cellText=cell_text,
@@ -232,20 +227,24 @@ def generate_check_sheet_png(checklist_data):
         cellLoc='center',
         cellColours=colors
     )
-    
+
     # Style the table
     table.auto_set_font_size(False)
     table.set_fontsize(12)
     table.scale(1, 1.5)  # Adjust table scale
-    
+
     # Set title
     plt.title(f'DevOps Check Sheet - {month}', fontsize=16, pad=20)
-    
+
     # Adjust layout and save
     plt.tight_layout()
-    plt.savefig('checksheet_table.png', dpi=300, bbox_inches='tight')
-    
-    print("Check sheet visualization generated: checksheet_table.png")
+
+    # Use month for filename (convert spaces to hyphens)
+    filename = f"checksheet_{month.replace(' ', '-')}.png"
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+
+    print(f"Check sheet visualization generated: {filename}")
+    return filename
 
 def main():
     # Get current month and year
@@ -255,22 +254,11 @@ def main():
 
     # Create DevOps labels if they don't exist
     create_devops_labels()
-    
+
     # Generate checklist data
     checklist_data = generate_month_checklist(year, month)
-    
-    # Save to JSON
-    save_checklist_to_json(checklist_data)
-    
-    # Generate PNG visualization
-    generate_check_sheet_png(checklist_data)
-    
-    print("Check sheet generation complete")
 
-if __name__ == "__main__":
-    # Script can run without token in GitHub Actions for basic functionality
-    if not GITHUB_TOKEN and not os.environ.get("GITHUB_ACTIONS"):
-        print("Warning: GITHUB_TOKEN not set. Some functionality will be limited.")
-        print("For full functionality: export GITHUB_TOKEN=ghp_abc123...")
+    # Generate PNG visualization with month in filename
+    filename = generate_check_sheet_png(checklist_data)
 
-    main()
+    print(f"Check sheet generation complete: {filename}")
