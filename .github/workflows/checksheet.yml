@@ -6,7 +6,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 0 1 * *'  # Run on the 1st of every month
+    - cron: '0 0 * * 1'  # Runs every week on Monday
   workflow_dispatch:  # Allow manual triggering
   issues:
     types: [closed]  # Run when issues are closed
@@ -45,12 +45,14 @@ jobs:
       - name: Check if files were generated
         run: |
           if [ -f "checksheet_data.json" ]; then echo "JSON data generated"; else echo "JSON data not found"; fi
-          if [ -f "checksheet_table.png" ]; then echo "Table image generated"; else echo "Table image not found"; fi
+          if [ -f "ishikawa/checksheet_table.png" ]; then echo "Table image generated"; else echo "Table image not found"; fi
       
       - name: Commit and push generated files
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add checksheet_data.json checksheet_table.png
+          mv checksheet_table.png ishikawa/
+          mv checksheet_data.json ishikawa/
+          git add ishikawa/checksheet_table.png ishikawa/checksheet_data.json
           git commit -m "Update DevOps Check Sheet for $(date +'%B %Y')" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }} || echo "No changes to push"
