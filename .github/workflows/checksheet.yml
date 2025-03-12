@@ -1,47 +1,50 @@
 name: DevOps Check Sheet Analysis
+
 permissions:
-  contents: read
+  contents: write
   issues: read
+
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Runs every week on Monday
-  workflow_dispatch:  # Allow manual triggering
+    - cron: '0 0 * * 1'  # Runs every Monday
+  workflow_dispatch:  # Allows manual execution
   issues:
-    types: [closed]  # Run when issues are closed
+    types: [closed]  # Executes when issues are closed
   push:
     branches:
       - master
+
 jobs:
   generate-check-sheet:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests matplotlib seaborn pandas numpy
-
+          pip install requests matplotlib pandas seaborn
+      
       - name: Run check sheet generator
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           python .github/scripts/checksheet.py
-
-      - name: Get script name
-        id: get_name
-        run: echo "SCRIPT_NAME=$(basename $(ls *.sh))" >> $GITHUB_ENV
-
-      - name: Upload diagram as artifact
+      
+      - name: Verify generated files
+        run: |
+          ls -la checksheet_*.png && echo "Image generated correctly" || echo "Image not found"
+      
+      - name: Upload Checksheet as artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.SCRIPT_NAME }}  # Usando el nombre del script como nombre del artifact
-          path: checksheet_*.png
-          retention-days: 90
+          name: checksheet-files
+          path: |
+            checksheet_*.png
