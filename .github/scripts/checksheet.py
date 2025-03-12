@@ -2,10 +2,7 @@ import os
 import requests
 from datetime import datetime, timedelta
 import calendar
-import json
-import sys
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -117,6 +114,9 @@ def generate_month_checklist(year, month):
     first_day = datetime(year, month, 1)
     _, last_day_num = calendar.monthrange(year, month)
     last_day = datetime(year, month, last_day_num)
+    
+    # Format month name for filename
+    month_name = first_day.strftime('%B_%Y')
 
     # Divide month into 4 weeks (approximately)
     days_in_month = (last_day - first_day).days + 1
@@ -163,14 +163,16 @@ def generate_month_checklist(year, month):
 
         checklist_data["phases"][phase] = phase_data
 
-    return checklist_data
+    return checklist_data, month_name
 
-
-def generate_check_sheet_png(checklist_data):
+def generate_check_sheet_png(checklist_data, month_name):
     """Generate PNG visualization of the check sheet data as a table with checkboxes"""
     month = checklist_data["month"]
     phases = checklist_data["phases"]
-
+    
+    # Define output path with month and year
+    output_path = f"checksheet_{month_name}.png"
+    
     # Create a pandas DataFrame for visualization
     data = []
     for phase, phase_data in phases.items():
@@ -183,17 +185,17 @@ def generate_check_sheet_png(checklist_data):
             'Total': phase_data['total_issues']
         }
         data.append(row)
-
+    
     df = pd.DataFrame(data)
-
+    
     # Set up the figure with appropriate size
     plt.figure(figsize=(10, 6))
-
+    
     # Hide axes
     ax = plt.gca()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
-
+    
     # Create table
     cell_text = []
     for _, row in df.iterrows():
@@ -208,7 +210,7 @@ def generate_check_sheet_png(checklist_data):
                 count = row[col]
                 cell_row.append(f"{count}")
         cell_text.append(cell_row)
-
+    
     # Table colors
     colors = []
     for i in range(len(df)):
@@ -218,7 +220,7 @@ def generate_check_sheet_png(checklist_data):
             row_colors.append('#ffffff')
         row_colors.append('#f2f2f2')  # Light gray for total column
         colors.append(row_colors)
-
+    
     # Create and customize table
     table = ax.table(
         cellText=cell_text,
@@ -227,24 +229,20 @@ def generate_check_sheet_png(checklist_data):
         cellLoc='center',
         cellColours=colors
     )
-
+    
     # Style the table
     table.auto_set_font_size(False)
     table.set_fontsize(12)
     table.scale(1, 1.5)  # Adjust table scale
-
+    
     # Set title
     plt.title(f'DevOps Check Sheet - {month}', fontsize=16, pad=20)
-
+    
     # Adjust layout and save
     plt.tight_layout()
-
-    # Use month for filename (convert spaces to hyphens)
-    filename = f"checksheet_{month.replace(' ', '-')}.png"
-    plt.savefig(filename, dpi=300, bbox_inches='tight')
-
-    print(f"Check sheet visualization generated: {filename}")
-    return filename
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    
+    print(f"Check sheet visualization generated: {output_path}")
 
 def main():
     # Get current month and year
@@ -254,11 +252,19 @@ def main():
 
     # Create DevOps labels if they don't exist
     create_devops_labels()
-
+    
     # Generate checklist data
-    checklist_data = generate_month_checklist(year, month)
+    checklist_data, month_name = generate_month_checklist(year, month)
+    
+    # Generate PNG visualization
+    generate_check_sheet_png(checklist_data, month_name)
+    
+    print("Check sheet generation complete")
 
-    # Generate PNG visualization with month in filename
-    filename = generate_check_sheet_png(checklist_data)
+if __name__ == "__main__":
+    # Script can run without token in GitHub Actions for basic functionality
+    if not GITHUB_TOKEN and not os.environ.get("GITHUB_ACTIONS"):
+        print("Warning: GITHUB_TOKEN not set. Some functionality will be limited.")
+        print("For full functionality: export GITHUB_TOKEN=ghp_abc123...")
 
-    print(f"Check sheet generation complete: {filename}")
+    main()
