@@ -4,7 +4,7 @@ permissions:
   issues: read
 on:
   schedule:
-    - cron: '0 0 * *1'  # Runs every week on Monday
+    - cron: '0 0 * * 1'  # Runs every week on Monday
   workflow_dispatch:  # Allow manual triggering
   issues:
     types: [closed]  # Run when issues are closed
