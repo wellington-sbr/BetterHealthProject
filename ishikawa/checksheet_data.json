@@ -1,0 +1,157 @@
+{
+  "month": "March 2025",
+  "phases": {
+    "Build": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Code": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Deploy": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Monitor": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Operate": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Plan": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Release": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    },
+    "Test": {
+      "week1": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week2": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week3": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "week4": {
+        "completed": false,
+        "issues_count": 0
+      },
+      "total_issues": 0
+    }
+  }
+}
