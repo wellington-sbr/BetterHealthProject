@@ -61,6 +61,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add pareto_chart.png
+          mv pareto_chart.png ishikawa/
+          git add ishikawa/pareto_chart.png
           git commit -m 'Update generated Pareto chart' || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }} || echo "No changes to push"
