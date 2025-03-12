@@ -27,7 +27,7 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          python ./ishikawa/histogram_general_report.py
+          python .github/scripts/histogram_general_report.py
       
       - name: Commit and push if changes
         run: |
