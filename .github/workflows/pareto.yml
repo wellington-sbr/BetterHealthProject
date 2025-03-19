@@ -57,11 +57,8 @@ jobs:
         run: |
           if [ -f "pareto_chart.png" ]; then echo "Pareto chart generated"; else echo "Pareto chart not found"; fi
 
-      - name: Commit and push chart
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          mv pareto_chart.png ishikawa/
-          git add ishikawa/pareto_chart.png
-          git commit -m 'Update generated Pareto chart' || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }} || echo "No changes to push"
+      - name: Upload Pareto chart as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pareto-chart
+          path: pareto_chart.png
