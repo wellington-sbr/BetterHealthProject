@@ -8,7 +8,7 @@ import datetime
 # 'histogram_general_report_generator.yml' workflow
 
 token = os.getenv('GH_PAT')
-repo_name = "ainhprzz/BetterHealthProject"
+repo_name = "wellington-sbr/BetterHealthProject"
 
 g = Github(token)
 repo = g.get_repo(repo_name)
