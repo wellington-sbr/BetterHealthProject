@@ -478,24 +478,6 @@ main {
     .settings-sections {
         grid-template-columns: 1fr;
     }
-    .profile-info {
-        max-width: 100%;
-    }
-
-    .profile-name {
-        font-size: 24px;
-    }
-}
-@media (max-width: 768px) {
-    .profile-content {
-        flex-direction: column;
-    }
-
-    .profile-left-section,
-    .profile-right-section {
-        width: 100%;
-    }
-
 }
 
 
