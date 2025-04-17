@@ -4,11 +4,15 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
+from patient.forms import PatientProfileForm, CustomUserCreationForm
+from patient.models import PatientProfile
+
+
 def home(request):
     return render(request, 'home.html')
 def register_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -17,7 +21,7 @@ def register_view(request):
         else:
             messages.error(request, 'Por favor corrige los errores del formulario.')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
 def login_view(request):
@@ -39,6 +43,29 @@ def logout_view(request):
     messages.info(request, 'Has cerrado sesión correctamente.')
     return redirect('login')
 
+
 @login_required
 def profile_view(request):
-    return render(request, 'profile.html')
+    profile, created = PatientProfile.objects.get_or_create(user=request.user)
+    if created:
+        profile.name = request.user.username
+        profile.save()
+
+    if request.method == 'POST' and request.FILES.get('profile_picture'):
+        profile.profile_picture = request.FILES['profile_picture']
+        profile.save()
+        messages.success(request, 'Foto de perfil actualizada correctamente.')
+        return redirect('profile')
+
+    return render(request, 'profile.html', {'profile': profile})
+
+@login_required
+def appointments_view(request):
+    return render(request, 'appointments.html')
+
+@login_required
+def settings_view(request):
+    return render(request, 'settings.html')
+
+def contact_view(request):
+    return render(request, 'contact.html')

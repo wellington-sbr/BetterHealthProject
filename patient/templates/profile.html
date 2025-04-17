@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Mi Perfil - BetterHealth{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h1 class="profile-title">Mi Perfil</h1>
+
+    <div class="profile-content">
+        <div class="profile-left-section">
+            <div class="profile-image-container">
+                <form method="post" enctype="multipart/form-data" id="profile-picture-form">
+                    {% csrf_token %}
+                    <div class="profile-picture-wrapper">
+                        {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="Foto de perfil" class="profile-picture">
+                        {% else %}
+                            <div class="profile-picture-placeholder">
+                                <span>{{ profile.name|first }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="edit-icon">
+                            <i class="fas fa-pencil-alt"></i>
+                        </div>
+                        </div>
+                    <input type="file" name="profile_picture" id="id_profile_picture" accept="image/*" style="display: none;">
+                </form>
+                    <h2 class="profile-name">{{ profile.name }}</h2> % está repetido
+            </div>
+            <div class="profile-info">
+                <h2 class="profile-name">{{ profile.name }}</h2>
+            </div>
+        </div>
+
+        <div class="profile-right-section">
+            <a href="{% url 'appointments' %}" class="profile-nav-card">
+                <h3>Mis Citas</h3>
+                <p>Gestiona tus citas médicas programadas</p>
+            </a>
+
+            <a href="{% url 'settings' %}" class="profile-nav-card">
+                <h3>Ajustes</h3>
+                <p>Configura tus preferencias y datos personales</p>
+            </a>
+
+            <a href="{% url 'contact' %}" class="profile-nav-card">
+                <h3>Contacto</h3>
+                <p>Ponte en contacto con nuestro equipo médico</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seleccionar elementos
+        const profilePictureWrapper = document.querySelector('.profile-picture-wrapper');
+        const fileInput = document.getElementById('id_profile_picture');
+        const form = document.getElementById('profile-picture-form');
+
+        // Mostrar selector de archivos al hacer clic en la imagen
+        profilePictureWrapper.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // Enviar formulario automáticamente cuando se selecciona una imagen
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                form.submit();
+            }
+        });
+    });
+</script>
+{% endblock %}
