@@ -6,6 +6,8 @@ from django.contrib.auth.decorators import login_required
 
 from patient.forms import PatientProfileForm, CustomUserCreationForm
 from patient.models import PatientProfile
+from .forms import CitaForm
+from .models import Cita
 
 
 def home(request):
@@ -69,3 +71,27 @@ def settings_view(request):
 
 def contact_view(request):
     return render(request, 'contact.html')
+
+
+def programar_cita(request):
+    if request.method == 'POST':
+        form = CitaForm(request.POST)
+        if form.is_valid():
+            cita = form.save(commit=False)
+            cita.usuario = request.user  # Asumiendo que usas autenticación
+            cita.save()
+
+            # Agregar mensaje de éxito con los detalles de la cita
+            messages.success(request, f'Cita guardada correctamente: {cita.fecha} a las {cita.hora} para el servicio {cita.servicio}.')
+
+            # Redirigir a la página de mis citas
+            return redirect('programar_cita')   # Asegúrate de que 'mis_citas' sea el nombre correcto de tu URL de mis citas
+    else:
+        form = CitaForm()
+
+    return render(request, 'programar_cita.html', {'form': form})
+
+def mis_citas(request):
+    citas = Cita.objects.filter(usuario=request.user)
+    print(f"Usuarios Citas: {citas}")  # Depuración en la consola
+    return render(request, 'mis_citas.html', {'citas': citas})

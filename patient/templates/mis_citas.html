@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Citas - BetterHealth{% endblock %}
+
+{% block content %}
+<div class="appointments-container">
+    <h1 class="appointments-title page-title">Mis Citas</h1>
+
+    {% if citas %}
+        <div class="appointments-grid">
+            {% for cita in citas %}
+                <div class="appointment-card">
+                    <div class="appointment-date">{{ cita.fecha }} a las {{ cita.hora }}</div>
+                    <div class="appointment-service">{{ cita.servicio }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No tienes citas agendadas.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

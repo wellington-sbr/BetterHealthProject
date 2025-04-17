@@ -16,3 +16,12 @@ class PatientProfile(models.Model):
     @property
     def email(self):
         return self.user.email
+
+class Cita(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    fecha = models.DateField()
+    hora = models.TimeField()
+    servicio = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"Cita para {self.usuario} el {self.fecha} a las {self.hora}"

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-
+from .models import Cita
 from patient.models import PatientProfile
 
 class CustomUserCreationForm(UserCreationForm):
@@ -24,3 +24,13 @@ class PatientProfileForm(forms.ModelForm):
     class Meta:
         model = PatientProfile
         fields = ('name', 'profile_picture')
+
+
+class CitaForm(forms.ModelForm):
+    class Meta:
+        model = Cita
+        fields = ['servicio', 'fecha', 'hora']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'hora': forms.TimeInput(attrs={'type': 'time'}),
+        }

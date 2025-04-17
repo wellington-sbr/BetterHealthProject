@@ -24,5 +24,6 @@ from django.shortcuts import redirect
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('login')),  # Redirige la raíz a /login/
-    path('', include('patient.urls')),           # Incluye las rutas de la app 'patients'
+    path('', include('patient.urls')),
+    # Incluye las rutas de la app 'patients'
 ]
