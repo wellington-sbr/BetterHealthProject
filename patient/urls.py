@@ -11,9 +11,11 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('home/', views.home, name='home'),
-    path('appointments/', views.appointments_view, name='appointments'),
+
     path('settings/', views.settings_view, name='settings'),
     path('contact/', views.contact_view, name='contact'),
+    path('programar-cita/', views.programar_cita, name='programar_cita'),
+path('mis-citas/', views.mis_citas, name='mis_citas')
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Programar Nueva Cita{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="page-title">Programar Nueva Cita</h1>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar cita</button>
+        </form>
+    </div>
+{% endblock %}
