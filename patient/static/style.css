@@ -175,3 +175,331 @@ main {
     color: var(--white);
     margin-top: auto;
 }
+
+/* Estilos para el perfil y la imagen*/
+.profile-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.profile-title, .page-title {
+    font-size: 36px;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 32px;
+    border-bottom: 2px solid #005F99;
+    padding-bottom: 8px;
+}
+
+.profile-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+}
+
+.profile-left-section {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-image-container {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 16px;
+}
+
+.profile-picture-wrapper {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid #005F99;
+    overflow: hidden;
+    cursor: pointer;
+    margin: 0 auto;
+}
+
+.profile-picture-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #005F99;
+    color: #FFFFFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-picture-placeholder span {
+    color: white;
+    font-size: 60px;
+    font-weight: bold;
+}
+
+.profile-picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    margin: 20px 0;
+    text-align: center;
+    width: 100%;
+    max-width: 250px;
+    border: 1px solid #F5F5F5;
+}
+
+.profile-name {
+    font-family: 'Inter', 'Open Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333333;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #005F99;
+}
+
+.profile-email {
+    font-size: 16px;
+    color: #666666;
+    margin-top: 8px;
+}
+
+.edit-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.edit-icon i {
+    color: white;
+    font-size: 24px;
+}
+
+.profile-picture-wrapper:hover .edit-icon {
+    opacity: 1;
+}
+/* Right side of the profile  */
+.profile-right-section {
+    flex: 2;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-nav-card {
+    display: block;
+    background-color: var(--white);
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 24px;
+    text-decoration: none;
+    color: var(--gray-dark);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-nav-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-nav-card h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.profile-nav-card p {
+    font-size: 16px;
+    color: #666666;
+}
+
+/* Styles for the contact & settings page */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.content-box {
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-text {
+    font-size: 16px;
+    color: #666666;
+    margin-bottom: 24px;
+}
+
+/* Estilos para ajustes */
+.settings-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.settings-card {
+    background-color: var(--light-blue);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.settings-card h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gray-dark);
+    margin-bottom: 12px;
+}
+
+.settings-card p {
+    font-size: 16px;
+    color: #666666;
+    margin-bottom: 16px;
+}
+
+/* Estilos para contacto */
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+}
+
+@media (max-width: 768px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-content {
+        flex-direction: column;
+    }
+}
+
+.contact-info h2,
+.contact-form-container h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gray-dark);
+    margin-bottom: 20px;
+}
+
+.contact-method {
+    margin-bottom: 24px;
+}
+
+.contact-method h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.contact-method p {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.contact-method .detail {
+    font-size: 14px;
+    color: #666666;
+}
+
+/* Estilos para citas */
+.appointments-list {
+    width: 100%;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 0;
+}
+
+.empty-state p {
+    margin-bottom: 16px;
+    color: #666666;
+}
+
+/* Botón secundario */
+.button.secondary {
+    display: inline-block;
+    background-color: var(--white);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+    width: auto;
+    text-align: center;
+}
+
+.button.secondary:hover {
+    background-color: var(--light-blue);
+}
+
+/* Modificación para el botón primario en los nuevos componentes */
+.content-box .button.primary,
+.empty-state .button.primary {
+    width: auto;
+    display: inline-block;
+}
+
+/* Ajuste responsivo */
+@media (max-width: 768px) {
+    .profile-left-section,
+    .profile-right-section {
+        width: 100%;
+    }
+
+    .contact-grid,
+    .settings-sections {
+        grid-template-columns: 1fr;
+    }
+    .profile-info {
+        max-width: 100%;
+    }
+
+    .profile-name {
+        font-size: 24px;
+    }
+}
+@media (max-width: 768px) {
+    .profile-content {
+        flex-direction: column;
+    }
+
+    .profile-left-section,
+    .profile-right-section {
+        width: 100%;
+    }
+
+}
+
+
+
+
+
+
