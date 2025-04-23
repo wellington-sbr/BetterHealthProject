@@ -1,16 +1,18 @@
 :root {
-    --primary: #4CA1DD; /* Azul más claro */
-    --success: #7ECBEF;
-    --gray-light: #F5F5F5;
-    --gray-dark: #03222F;
-    --error: #FF5F5F;
-    --white: #ffffff;
-    --light-blue: #EBF5FF; /* Azul muy claro para fondo */
+    --primary: #005F99; /* Azul Profesional */
+    --success: #4CAF50; /* Verde Salud */
+    --gray-light: #F5F5F5; /* Gris Claro */
+    --gray-dark: #333333; /* Gris Oscuro */
+    --error: #D32F2F; /* Rojo Alerta */
+    --white: #FFFFFF; /* Blanco */
+    --light-blue: #EBF5FF; /* Azul Muy Claro para fondo */
+    --font-primary: 'Inter', sans-serif;
+    --font-secondary: 'Roboto', sans-serif;
 }
 
 body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font-primary);
     background: var(--light-blue);
     color: var(--gray-dark);
     min-height: 100vh;
@@ -74,7 +76,7 @@ main {
     margin: 2rem auto;
     background: var(--white);
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: 12px; /* Borde redondeado de 12px */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
 }
@@ -83,6 +85,8 @@ main {
     margin-bottom: 1.5rem;
     color: var(--primary);
     text-align: center;
+    font-size: 36px; /* Tamaño de fuente H1 */
+    font-weight: bold;
 }
 
 .form-group {
@@ -99,7 +103,7 @@ main {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 8px; /* Border-radius de 8px */
     box-sizing: border-box;
 }
 
@@ -110,9 +114,9 @@ main {
 }
 
 .button {
-    padding: 0.75rem 1.5rem;
+    padding: 12px 24px; /* Padding de 12px 24px */
     border: none;
-    border-radius: 5px;
+    border-radius: 8px; /* Border-radius de 8px */
     color: var(--white);
     font-weight: bold;
     cursor: pointer;
@@ -126,7 +130,18 @@ main {
 }
 
 .button.primary:hover {
-    background-color: #3b8bc3;
+    background-color: #00457C; /* Oscurecer el color de fondo para el hover */
+}
+
+.button.secondary {
+    background-color: var(--white);
+    color: var(--primary);
+    border: 2px solid var(--primary);
+}
+
+.button.secondary:hover {
+    background-color: var(--primary);
+    color: var(--white);
 }
 
 .button.success {
@@ -134,412 +149,93 @@ main {
 }
 
 .button.success:hover {
-    background-color: #69b8df;
+    background-color: #45A049; /* Oscurecer el color de fondo para el hover */
+}
+
+.button.error {
+    background-color: var(--error);
+}
+
+.button.error:hover {
+    background-color: #C62828; /* Oscurecer el color de fondo para el hover */
+}
+
+.button:disabled {
+    background-color: var(--gray-light);
+    cursor: not-allowed;
 }
 
 .link-text {
     margin-top: 1.5rem;
-    text-align: center;
+    color: var(--primary);
+    font-size: 14px; /* Tamaño de texto pequeño */
 }
 
-.messages-container {
-    max-width: 800px;
-    margin: 1rem auto;
+@media (max-width: 768px) {
+    .form-container {
+        padding: 1.5rem;
+    }
+
+    .form h1 {
+        font-size: 28px; /* Tamaño de fuente H2 en pantallas más pequeñas */
+    }
+}
+.appointments-container {
+    padding: 2rem;  /* Añadir un espacio superior para que no quede pegado a la parte superior */
 }
 
-.messages {
-    list-style: none;
-    padding: 0;
-}
-
-.messages li {
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    border-radius: 5px;
-}
-
-.messages li.success {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.messages li.error {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.footer {
-    text-align: center;
-    padding: 1rem;
-    background: var(--primary);
-    color: var(--white);
-    margin-top: auto;
-}
-
-/* Estilos para el perfil y la imagen*/
-.profile-container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px;
-}
-
-.profile-title, .page-title {
-    font-size: 36px;
-    font-weight: bold;
-    color: #333333;
-    margin-bottom: 32px;
-    border-bottom: 2px solid #005F99;
-    padding-bottom: 8px;
-}
-
-.profile-content {
+.filter-form {
     display: flex;
     flex-wrap: wrap;
-    gap: 32px;
+    justify-content: center; /* Centra el formulario */
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: var(--white);  /* Fondo blanco para que se destaque */
+    border-radius: 10px;  /* Bordes redondeados */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);  /* Sombra sutil para darle profundidad */
 }
 
-.profile-left-section {
-    flex: 1;
-    min-width: 250px;
+.filter-group {
     display: flex;
     flex-direction: column;
-    align-items: center;
-}
-
-.profile-image-container {
-    width: 200px;
-    height: 200px;
-    margin-bottom: 16px;
-}
-
-.profile-picture-wrapper {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    border: 3px solid #005F99;
-    overflow: hidden;
-    cursor: pointer;
-    margin: 0 auto;
-}
-
-.profile-picture-placeholder {
     width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background-color: #005F99;
-    color: #FFFFFF;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    max-width: 250px;  /* Ancho máximo para los campos de entrada */
 }
 
-.profile-picture-placeholder span {
-    color: white;
-    font-size: 60px;
+.filter-group label {
     font-weight: bold;
-}
-
-.profile-picture {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.profile-info {
-    background-color: #FFFFFF;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    padding: 24px;
-    margin: 20px 0;
-    text-align: center;
-    width: 100%;
-    max-width: 250px;
-    border: 1px solid #F5F5F5;
-}
-
-.profile-name {
-    font-family: 'Inter', 'Open Sans', sans-serif;
-    font-size: 28px;
-    font-weight: 600;
-    color: #333333;
-    margin: 0;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #005F99;
-}
-
-.profile-email {
-    font-size: 16px;
-    color: #666666;
-    margin-top: 8px;
-}
-
-.edit-icon {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.edit-icon i {
-    color: white;
-    font-size: 24px;
-}
-
-.profile-picture-wrapper:hover .edit-icon {
-    opacity: 1;
-}
-/* Right side of the profile  */
-.profile-right-section {
-    flex: 2;
-    min-width: 300px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.profile-nav-card {
-    display: block;
-    background-color: var(--white);
-    border: 2px solid var(--primary);
-    border-radius: 10px;
-    padding: 24px;
-    text-decoration: none;
+    margin-bottom: 0.5rem;
     color: var(--gray-dark);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.profile-nav-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.profile-nav-card h3 {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--primary);
-    margin-bottom: 8px;
-}
-
-.profile-nav-card p {
-    font-size: 16px;
-    color: #666666;
-}
-
-/* Styles for the contact & settings page */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px;
-}
-
-.content-box {
-    background-color: var(--white);
-    border-radius: 10px;
-    padding: 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.info-text {
-    font-size: 16px;
-    color: #666666;
-    margin-bottom: 24px;
-}
-
-/* Estilos para ajustes */
-.settings-sections {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-}
-
-.settings-card {
-    background-color: var(--light-blue);
-    border-radius: 8px;
-    padding: 20px;
-}
-
-.settings-card h2 {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--gray-dark);
-    margin-bottom: 12px;
-}
-
-.settings-card p {
-    font-size: 16px;
-    color: #666666;
-    margin-bottom: 16px;
-}
-
-/* Estilos para contacto */
-.contact-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-}
-
-@media (max-width: 768px) {
-    .contact-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .profile-content {
-        flex-direction: column;
-    }
-}
-
-.contact-info h2,
-.contact-form-container h2 {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--gray-dark);
-    margin-bottom: 20px;
-}
-
-.contact-method {
-    margin-bottom: 24px;
-}
-
-.contact-method h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--primary);
-    margin-bottom: 8px;
-}
-
-.contact-method p {
-    font-size: 16px;
-    margin-bottom: 4px;
-}
-
-.contact-method .detail {
-    font-size: 14px;
-    color: #666666;
-}
-
-/* Estilos para citas */
-.appointments-list {
-    width: 100%;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 48px 0;
-}
-
-.empty-state p {
-    margin-bottom: 16px;
-    color: #666666;
-}
-
-/* Botón secundario */
-.button.secondary {
-    display: inline-block;
-    background-color: var(--white);
-    color: var(--primary);
-    border: 1px solid var(--primary);
-    padding: 0.75rem 1.5rem;
+.filter-group input {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
     border-radius: 5px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.2s, color 0.2s;
-    width: auto;
-    text-align: center;
-}
-
-.button.secondary:hover {
-    background-color: var(--light-blue);
-}
-
-/* Modificación para el botón primario en los nuevos componentes */
-.content-box .button.primary,
-.empty-state .button.primary {
-    width: auto;
-    display: inline-block;
-}
-
-/* Ajuste responsivo */
-@media (max-width: 768px) {
-    .profile-left-section,
-    .profile-right-section {
-        width: 100%;
-    }
-
-    .contact-grid,
-    .settings-sections {
-        grid-template-columns: 1fr;
-    }
-}
-
-.button {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 0.5rem;
     font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    text-decoration: none; /* Quitar subrayado */
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .button.primary {
     background-color: var(--primary);
-    color: white;
-    width: auto; /* ← ¡Esto evita que se extienda como bloque completo! */
+    color: var(--white);
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 1rem;
+    width: auto;
 }
 
 .button.primary:hover {
-    background-color: #2980b9; /* Un azul un poco más oscuro al pasar el mouse */
+    background-color: #3b8bc3;
 }
 
-
-.appointments-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 24px;
-}
-
+/* Espaciado adicional para el contenido de las citas */
 .appointments-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-    margin-top: 24px;
+    margin-top: 2rem;
 }
-
-.appointment-card {
-    background-color: var(--white);
-    border-left: 5px solid var(--primary);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease;
-}
-
-.appointment-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-}
-
-.appointment-date {
-    font-size: 18px;
-    font-weight: bold;
-    color: var(--primary);
-    margin-bottom: 10px;
-}
-
-.appointment-service {
-    font-size: 16px;
-    color: #555;
-}
-

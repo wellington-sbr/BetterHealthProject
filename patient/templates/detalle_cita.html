@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalles de la Cita{% endblock %}
+
+{% block content %}
+<div class="appointment-detail">
+    <h1>Detalles de la Cita</h1>
+
+    <div class="detail-card">
+        <p><strong>Paciente:</strong> {{ cita.paciente.name }}</p>
+        <p><strong>Servicio:</strong> {{ cita.servicio }}</p>
+        <p><strong>Motivo:</strong> {{ cita.motivo }}</p>
+        <p><strong>Fecha:</strong> {{ cita.fecha }}</p>
+        <p><strong>Hora:</strong> {{ cita.hora }}</p>
+    </div>
+
+    <a href="{% url 'mis_citas' %}" class="button primary">Volver a mis citas</a>
+</div>
+{% endblock %}
