@@ -132,15 +132,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core.apps.CoreConfig',
 
+    'administrative.apps.AdministrativeConfig',
     'patient',
     'financial',
 ]
 AUTH_USER_MODEL = 'core.CustomUser'
-LOGIN_URL = '/admin/login/'
-LOGIN_REDIRECT_URL = '/admin/'
+LOGIN_URL = '/administrative/login/'
+LOGIN_REDIRECT_URL = '/administrative/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'admin/static'),
+    os.path.join(BASE_DIR, 'administrative/static'),
 ]
 
 MEDIA_URL = '/media/'

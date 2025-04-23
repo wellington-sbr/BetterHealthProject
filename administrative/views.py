@@ -9,12 +9,12 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 class AdminLoginView(LoginView):
-    template_name = 'admin/login.html'
+    template_name = 'administrative/login.html'
     redirect_authenticated_user = True
 
 @login_required
 class DashboardView(TemplateView):
-    template_name = 'admin/dashboard.html'
+    template_name = 'administrative/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -22,7 +22,7 @@ class DashboardView(TemplateView):
         return context
 
 class AdminCalendarView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
-    template_name = 'admin/dashboard.html'
+    template_name = 'administrative/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -49,7 +49,7 @@ class AdminCalendarView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
         return context
 
 class CalendarioView(LoginRequiredMixin, ListView):
-    template_name = 'admin/calendario.html'
+    template_name = 'administrative/calendario.html'
     model = Cita
     context_object_name = 'citas'
 
