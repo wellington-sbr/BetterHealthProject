@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
@@ -12,6 +12,8 @@ from .models import Cita
 
 def home(request):
     return render(request, 'home.html')
+
+
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -26,6 +28,7 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -39,6 +42,7 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
+
 
 def logout_view(request):
     logout(request)
@@ -61,13 +65,16 @@ def profile_view(request):
 
     return render(request, 'profile.html', {'profile': profile})
 
+
 @login_required
 def appointments_view(request):
     return render(request, 'appointments.html')
 
+
 @login_required
 def settings_view(request):
     return render(request, 'settings.html')
+
 
 def contact_view(request):
     return render(request, 'contact.html')
@@ -82,16 +89,32 @@ def programar_cita(request):
             cita.save()
 
             # Agregar mensaje de éxito con los detalles de la cita
-            messages.success(request, f'Cita guardada correctamente: {cita.fecha} a las {cita.hora} para el servicio {cita.servicio}.')
+            messages.success(request,
+                             f'Cita guardada correctamente: {cita.fecha} a las {cita.hora} para el servicio {cita.servicio}.')
 
             # Redirigir a la página de mis citas
-            return redirect('programar_cita')   # Asegúrate de que 'mis_citas' sea el nombre correcto de tu URL de mis citas
+            return redirect(
+                'programar_cita')  # Asegúrate de que 'mis_citas' sea el nombre correcto de tu URL de mis citas
     else:
         form = CitaForm()
 
     return render(request, 'programar_cita.html', {'form': form})
 
+
 def mis_citas(request):
-    citas = Cita.objects.filter(usuario=request.user)
-    print(f"Usuarios Citas: {citas}")  # Depuración en la consola
+    citas = Cita.objects.all()
+
+    # Filtrado por servicio
+    servicio = request.GET.get('servicio')
+    if servicio:
+        citas = citas.filter(servicio__icontains=servicio)
+
+    # Filtrado por fecha
+    fecha = request.GET.get('fecha')
+    if fecha:
+        citas = citas.filter(fecha=fecha)
+
     return render(request, 'mis_citas.html', {'citas': citas})
+def detalle_cita(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+    return render(request, 'detalle_cita.html', {'cita': cita})
