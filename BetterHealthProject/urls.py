@@ -22,8 +22,10 @@ from django.urls import path, include
 from django.shortcuts import redirect
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('admin/', admin.site.urls),  # ← Corrige esta línea (no admin.urls)
+    path('administrativo/', include('admin.urls')),  # Si tienes una app personal llamada admin
     path('', lambda request: redirect('login')),  # Redirige la raíz a /login/
-    path('', include('patient.urls')),
+    path('patient', include('patient.urls')),
     # Incluye las rutas de la app 'patients'
 ]

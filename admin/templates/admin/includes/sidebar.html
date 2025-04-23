@@ -1,10 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+<div class="sidebar">
+    <!-- Encabezado con logo -->
+    <div class="sidebar-header">
+        <div class="brand-logo">
+            <i data-lucide="stethoscope" class="logo-icon"></i>
+            <div class="brand-text">
+                <h2 class="brand-title">Better Health</h2>
+                <p class="brand-subtitle">Panel Administrativo</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación principal -->
+    <nav class="sidebar-nav">
+        <a href="{% url 'admin:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i data-lucide="calendar-days"></i>
+            <span>Calendario</span>
+        </a>
+
+        <a href="{% url 'admin:pacientes' %}" class="nav-item">
+            <i data-lucide="users"></i>
+            <span>Pacientes</span>
+        </a>
+
+        <a href="{% url 'admin:configuracion' %}" class="nav-item">
+            <i data-lucide="settings"></i>
+            <span>Configuración</span>
+        </a>
+    </nav>
+
+    <!-- Selector de fecha -->
+    <div class="date-selector">
+        <div class="selector-header">
+            <i data-lucide="calendar-clock"></i>
+            <h3>Seleccionar Fecha</h3>
+        </div>
+        <input type="date"
+               class="styled-date-input"
+               id="fechaSelector"
+               value="{{ fecha_actual|date:'Y-m-d' }}"
+               max="{% now 'Y-m-d' %}"
+               onchange="window.location.href='{% url 'admin:dashboard' %}?fecha=' + this.value">
+    </div>
+
+    <!-- Footer del sidebar -->
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <i data-lucide="user-circle"></i>
+            <div class="user-details">
+                <span class="username">{{ request.user.get_full_name }}</span>
+                <span class="user-role">{{ request.user.get_role_display }}</span>
+            </div>
+        </div>
+        <a href="{% url 'admin:logout' %}" class="logout-btn">
+            <i data-lucide="log-out"></i>
+        </a>
+    </div>
+</div>

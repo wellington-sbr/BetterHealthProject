@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <title>Better Health - Admin</title>
+    <link rel="stylesheet" href="{% static 'admin/css/style.css' %}">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-$END$
+    {% include 'admin/includes/sidebar.html' %}
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_js %}{% endblock %}
+    <script>lucide.createIcons();</script>
 </body>
 </html>

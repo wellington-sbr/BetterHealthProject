@@ -1,10 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block content %}
+<div class="calendar-header">
+    <h1>Gestor de Citas</h1>
+</div>
+
+<div class="calendar-container card">
+    <div id="calendar"></div>
+</div>
+
+<script>
+    const eventos = [
+        {% for cita in citas %}
+        {
+            title: "{{ cita.paciente.get_full_name }}",
+            start: "{{ cita.fecha_hora|date:'Y-m-d H:i' }}",
+            color: "{% if cita.estado == 'confirmada' %}#4CAF50{% else %}#D32F2F{% endif %}"
+        },
+        {% endfor %}
+    ]
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<script src="{% static 'admin/js/calendar.js' %}"></script>
+{% endblock %}

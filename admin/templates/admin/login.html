@@ -1,10 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="brand-header">
+            <i data-lucide="stethoscope" class="text-primary"></i>
+            <h1>Better Health</h1>
+            <p class="slogan">Tu bienestar, nuestra prioridad</p>
+        </div>
+        
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_username">Usuario</label>
+                <input type="text" name="username" 
+                       class="form-control" 
+                       placeholder="ejemplo@betterhealth.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="id_password">Contraseña</label>
+                <input type="password" name="password" 
+                       class="form-control" 
+                       placeholder="••••••••">
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i data-lucide="log-in"></i> Acceder
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

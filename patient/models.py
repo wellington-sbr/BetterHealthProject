@@ -2,11 +2,16 @@ from django.db import models
 
 # Create your models here.
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import User
 
 
 class PatientProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,  # Usa la referencia al modelo personalizado
+        on_delete=models.CASCADE,
+        related_name='patient_profile'
+    )
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     name = models.CharField(max_length=100)
 

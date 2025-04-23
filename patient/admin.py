@@ -1,2 +1,7 @@
 from django.contrib import admin
-# No necesitas registrar nada si no usas modelos personalizados
+from .models import PatientProfile
+
+@admin.register(PatientProfile)
+class PatientProfileAdmin(admin.ModelAdmin):
+    list_display = ('user',)
+    search_fields = ('user__username', 'user__email')

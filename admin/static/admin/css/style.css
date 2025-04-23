@@ -1,0 +1,280 @@
+:root {
+    --azul-primario: #005F99;
+    --verde-salud: #4CAF50;
+    --gris-oscuro: #333333;
+    --gris-claro: #F5F5F5;
+    --rojo-alerta: #D32F2F;
+    --sombra: 0 2px 8px rgba(0,0,0,0.1);
+}
+/* Estructura principal */
+body {
+    font-family: 'Inter', sans-serif;
+    background: #F5F5F5;
+}
+
+.content {
+    margin-left: 280px;
+    padding: 2rem;
+}
+
+/* Estilos generales del sidebar */
+.sidebar {
+    background: var(--azul-primario);
+    width: 280px;
+    height: 100vh;
+    padding: 1.5rem;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+/* Encabezado */
+.sidebar-header {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    color: white;
+}
+
+.brand-text {
+    line-height: 1.2;
+}
+
+.brand-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.brand-subtitle {
+    font-size: 0.875rem;
+    opacity: 0.8;
+    margin: 0;
+}
+
+/* Navegación */
+.sidebar-nav {
+    flex: 1;
+    margin: 2rem 0;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+    background: var(--verde-salud);
+    font-weight: 500;
+}
+
+.nav-item i {
+    width: 24px;
+    height: 24px;
+}
+
+/* Selector de fecha */
+.date-selector {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.selector-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.selector-header h3 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.styled-date-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 0.5rem;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Footer del sidebar */
+.sidebar-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.user-info i {
+    width: 32px;
+    height: 32px;
+}
+
+.user-details {
+    line-height: 1.4;
+}
+
+.username {
+    font-weight: 500;
+    display: block;
+}
+
+.user-role {
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    text-decoration: none;
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+
+
+.btn-primary {
+    background: var(--azul-primario);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: filter 0.3s;
+}
+
+.btn-primary:hover {
+    filter: brightness(0.9);
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--sombra);
+}
+
+/* Estilos generales */
+.calendar-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Sobreescrituras de FullCalendar */
+.fc-toolbar-title {
+    font-family: 'Inter', sans-serif;
+    color: #333333;
+    font-weight: 600;
+}
+
+.fc-button-primary {
+    background-color: #005F99 !important;
+    border-color: #005F99 !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--gris-claro);
+}
+
+.login-card {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+    width: 100%;
+    max-width: 440px;
+}
+
+.brand-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.brand-header i {
+    font-size: 48px;
+    color: var(--azul-primario);
+    margin-bottom: 16px;
+}
+
+.slogan {
+    color: var(--gris-oscuro);
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.login-form .form-group {
+    margin-bottom: 24px;
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--gris-oscuro);
+    font-weight: 500;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+}
+
+.login-form input:focus {
+    border-color: var(--azul-primario);
+    outline: none;
+}
+
