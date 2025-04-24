@@ -36,7 +36,7 @@ class StaffCreationForm(forms.ModelForm):
         )
         staff_profile = super().save(commit=False)
         staff_profile.user = user
-        staff_profile.role = self.cleaned_data['role']  # asegúrate de setear el rol
+        staff_profile.role = self.cleaned_data['role']
         if commit:
             staff_profile.save()
         return staff_profile
