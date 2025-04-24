@@ -1,16 +1,16 @@
 :root {
-    --primary: #005F99; /* Azul Profesional from guide */
-    --success: #4CAF50; /* Verde Salud from guide */
-    --gray-light: #F5F5F5; /* Matches guide */
-    --gray-dark: #333333; /* Text color from guide */
-    --error: #D32F2F; /* Rojo Alerta from guide */
-    --white: #ffffff; /* Matches guide */
-    --light-blue: #EBF5FF; /* Keep existing light blue for contrast */
+    --primary: #005F99;
+    --success: #4CAF50;
+    --gray-light: #F5F5F5;
+    --gray-dark: #333333;
+    --error: #D32F2F;
+    --white: #ffffff;
+    --light-blue: #EBF5FF;
 }
 
 body {
     margin: 0;
-    font-family: 'Inter', 'Open Sans', 'Segoe UI', sans-serif; /* Updated to prioritize fonts from guide */
+    font-family: 'Inter', 'Open Sans', 'Segoe UI', sans-serif;
     background: var(--gray-light);
     color: var(--gray-dark);
     min-height: 100vh;
@@ -73,8 +73,8 @@ main {
     max-width: 500px;
     margin: 2rem auto;
     background: var(--white);
-    padding: 24px; /* Adjusted to match guide */
-    border-radius: 12px; /* Updated to match card spec */
+    padding: 24px;
+    border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
 }
@@ -83,7 +83,7 @@ main {
     margin-bottom: 1.5rem;
     color: var(--primary);
     text-align: center;
-    font-size: 36px; /* H1 size from guide */
+    font-size: 36px;
     font-weight: bold;
 }
 
@@ -100,29 +100,29 @@ main {
 
 .form-group input {
     width: 100%;
-    padding: 12px; /* Updated to match guide */
+    padding: 12px;
     border: 1px solid #ddd;
-    border-radius: 8px; /* Updated to match guide */
+    border-radius: 8px;
     box-sizing: border-box;
 }
 
 .form-group input:focus {
-    border-color: var(--primary); /* Focus state from guide */
+    border-color: var(--primary);
     outline: none;
 }
 
 .error-message {
     color: var(--error);
-    font-size: 14px; /* Small text from guide */
+    font-size: 14px;
     margin-top: 0.25rem;
-    font-style: italic; /* Added as per form validation specs */
+    font-style: italic;
 }
 
 .button {
     display: inline-block;
-    padding: 12px 24px; /* Updated to match guide */
+    padding: 12px 24px;
     border: none;
-    border-radius: 8px; /* Updated to match guide */
+    border-radius: 8px;
     color: var(--white);
     font-weight: 500;
     cursor: pointer;
@@ -139,7 +139,7 @@ main {
 }
 
 .button.primary:hover {
-    background-color: #004d7a; /* Darker version of primary */
+    background-color: #004d7a;
 }
 
 .button.success {
@@ -148,7 +148,7 @@ main {
 }
 
 .button.success:hover {
-    background-color: #3d8b40; /* Darker version of success */
+    background-color: #3d8b40;
 }
 
 .button.secondary {
@@ -167,7 +167,7 @@ main {
 }
 
 .button.danger:hover {
-    background-color: #b71c1c; /* Darker version of error */
+    background-color: #b71c1c;
 }
 
 .button:disabled {
@@ -194,16 +194,16 @@ main {
 .messages li {
     padding: 0.75rem;
     margin-bottom: 0.5rem;
-    border-radius: 8px; /* Updated to match guide */
+    border-radius: 8px;
 }
 
 .messages li.success {
-    background-color: #e8f5e9; /* Light green background */
+    background-color: #e8f5e9;
     color: var(--success);
 }
 
 .messages li.error {
-    background-color: #ffebee; /* Light red background */
+    background-color: #ffebee;
     color: var(--error);
 }
 
@@ -215,7 +215,6 @@ main {
     margin-top: auto;
 }
 
-/* Estilos para el perfil y la imagen*/
 .profile-container {
     width: 100%;
     max-width: 1200px;
@@ -224,7 +223,7 @@ main {
 }
 
 .profile-title, .page-title {
-    font-size: 36px; /* H1 size from guide */
+    font-size: 36px;
     font-weight: bold;
     color: var(--gray-dark);
     margin-bottom: 32px;
@@ -288,9 +287,9 @@ main {
 
 .profile-info {
     background-color: var(--white);
-    border-radius: 12px; /* Updated to match card spec */
+    border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    padding: 24px; /* Updated to match guide */
+    padding: 24px;
     margin: 20px 0;
     text-align: center;
     width: 100%;
@@ -300,8 +299,8 @@ main {
 
 .profile-name {
     font-family: 'Inter', 'Open Sans', sans-serif;
-    font-size: 28px; /* H2 size from guide */
-    font-weight: 600; /* Semi-bold from guide */
+    font-size: 28px;
+    font-weight: 600;
     color: var(--gray-dark);
     margin: 0;
     padding-bottom: 12px;
@@ -309,7 +308,7 @@ main {
 }
 
 .profile-email {
-    font-size: 16px; /* Body text from guide */
+    font-size: 16px;
     color: #666666;
     margin-top: 8px;
 }
@@ -337,7 +336,6 @@ main {
     opacity: 1;
 }
 
-/* Right side of the profile  */
 .profile-right-section {
     flex: 2;
     min-width: 300px;
@@ -350,8 +348,8 @@ main {
     display: block;
     background-color: var(--white);
     border-left: 5px solid var(--primary);
-    border-radius: 12px; /* Updated to match card spec */
-    padding: 24px; /* Updated to match guide */
+    border-radius: 12px;
+    padding: 24px;
     text-decoration: none;
     color: var(--gray-dark);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -364,18 +362,17 @@ main {
 }
 
 .profile-nav-card h3 {
-    font-size: 22px; /* H3 size from guide */
-    font-weight: 600; /* Semi-bold from guide */
+    font-size: 22px;
+    font-weight: 600;
     color: var(--primary);
     margin-bottom: 8px;
 }
 
 .profile-nav-card p {
-    font-size: 16px; /* Body text from guide */
+    font-size: 16px;
     color: #666666;
 }
 
-/* Styles for the contact & settings page */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -384,18 +381,17 @@ main {
 
 .content-box {
     background-color: var(--white);
-    border-radius: 12px; /* Updated to match card spec */
-    padding: 24px; /* Updated to match guide */
+    border-radius: 12px;
+    padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .info-text {
-    font-size: 16px; /* Body text from guide */
+    font-size: 16px;
     color: #666666;
     margin-bottom: 24px;
 }
 
-/* Estilos para ajustes */
 .settings-sections {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -404,25 +400,24 @@ main {
 
 .settings-card {
     background-color: var(--white);
-    border-radius: 12px; /* Updated to match card spec */
-    padding: 24px; /* Updated to match guide */
+    border-radius: 12px;
+    padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .settings-card h2 {
-    font-size: 28px; /* H2 size from guide */
-    font-weight: 600; /* Semi-bold from guide */
+    font-size: 28px;
+    font-weight: 600;
     color: var(--gray-dark);
     margin-bottom: 12px;
 }
 
 .settings-card p {
-    font-size: 16px; /* Body text from guide */
+    font-size: 16px;
     color: #666666;
     margin-bottom: 16px;
 }
 
-/* Estilos para contacto */
 .contact-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -441,8 +436,8 @@ main {
 
 .contact-info h2,
 .contact-form-container h2 {
-    font-size: 28px; /* H2 size from guide */
-    font-weight: 600; /* Semi-bold from guide */
+    font-size: 28px;
+    font-weight: 600;
     color: var(--gray-dark);
     margin-bottom: 20px;
 }
@@ -452,23 +447,22 @@ main {
 }
 
 .contact-method h3 {
-    font-size: 22px; /* H3 size from guide */
-    font-weight: 600; /* Semi-bold from guide */
+    font-size: 22px;
+    font-weight: 600;
     color: var(--primary);
     margin-bottom: 8px;
 }
 
 .contact-method p {
-    font-size: 16px; /* Body text from guide */
+    font-size: 16px;
     margin-bottom: 4px;
 }
 
 .contact-method .detail {
-    font-size: 14px; /* Small text from guide */
+    font-size: 14px;
     color: #666666;
 }
 
-/* Estilos para citas */
 .appointments-list {
     width: 100%;
 }
@@ -483,14 +477,12 @@ main {
     color: #666666;
 }
 
-/* Modificación para el botón primario en los nuevos componentes */
 .content-box .button.primary,
 .empty-state .button.primary {
     width: auto;
     display: inline-block;
 }
 
-/* Ajuste responsivo */
 @media (max-width: 768px) {
     .profile-left-section,
     .profile-right-section {
@@ -527,8 +519,8 @@ main {
 .appointment-card {
     background-color: var(--white);
     border-left: 5px solid var(--primary);
-    padding: 24px; /* Updated to match guide */
-    border-radius: 12px; /* Updated to match card spec */
+    padding: 24px;
+    border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease;
 }
@@ -546,11 +538,10 @@ main {
 }
 
 .appointment-service {
-    font-size: 16px; /* Body text from guide */
+    font-size: 16px;
     color: #555;
 }
 
-/* Estilos para tablas según guía */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -565,7 +556,7 @@ table th {
 }
 
 table tr:nth-child(even) {
-    background-color: #f9f9f9; /* Zebra striping */
+    background-color: #f9f9f9;
 }
 
 table td {
@@ -574,7 +565,7 @@ table td {
 }
 
 table td:last-child {
-    text-align: right; /* For action icons */
+    text-align: right;
 }
 
 @media (max-width: 768px) {
@@ -584,7 +575,6 @@ table td:last-child {
     }
 }
 
-/* Slogan styling */
 .brand-slogan {
     font-size: 16px;
     font-style: italic;
@@ -593,7 +583,6 @@ table td:last-child {
     font-weight: normal;
 }
 
-/* When used in header/navbar */
 .navbar .logo-container {
     display: flex;
     flex-direction: column;
@@ -602,4 +591,47 @@ table td:last-child {
 .navbar .logo-container .brand-slogan {
     font-size: 14px;
     margin-top: 0;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.appointment-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.detail-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
 }

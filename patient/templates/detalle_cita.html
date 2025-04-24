@@ -14,6 +14,83 @@
         <p><strong>Hora:</strong> {{ cita.hora }}</p>
     </div>
 
-    <a href="{% url 'mis_citas' %}" class="button primary">Volver a mis citas</a>
+    <div class="appointment-actions">
+        <a href="{% url 'mis_citas' %}" class="button primary">Volver a mis citas</a>
+        <button id="reschedule-button" class="button secondary">Reprogramar cita</button>
+        <button id="cancel-button" class="button danger">Cancelar cita</button>
+    </div>
+
+    <div id="cancel-modal" class="modal">
+        <div class="modal-content">
+            <h2>Confirmar cancelación</h2>
+            <p>¿Estás seguro de que deseas cancelar esta cita?</p>
+            <p>Esta acción no se puede deshacer.</p>
+            <div class="modal-actions">
+                <button id="confirm-cancel" class="button danger">Sí, cancelar cita</button>
+                <button id="cancel-action" class="button secondary">No, mantener cita</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reschedule-modal" class="modal">
+        <div class="modal-content">
+            <h2>Confirmar reprogramación</h2>
+            <p>¿Estás seguro de que deseas reprogramar esta cita?</p>
+            <p>Serás redirigido a un formulario para seleccionar una nueva fecha y hora.</p>
+            <div class="modal-actions">
+                <button id="confirm-reschedule" class="button primary">Sí, reprogramar cita</button>
+                <button id="cancel-reschedule" class="button secondary">No, mantener cita</button>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cancelButton = document.getElementById('cancel-button');
+        const cancelModal = document.getElementById('cancel-modal');
+        const confirmCancel = document.getElementById('confirm-cancel');
+        const cancelAction = document.getElementById('cancel-action');
+
+        const rescheduleButton = document.getElementById('reschedule-button');
+        const rescheduleModal = document.getElementById('reschedule-modal');
+        const confirmReschedule = document.getElementById('confirm-reschedule');
+        const cancelReschedule = document.getElementById('cancel-reschedule');
+
+        cancelButton.addEventListener('click', function() {
+            cancelModal.style.display = 'flex';
+        });
+
+        cancelAction.addEventListener('click', function() {
+            cancelModal.style.display = 'none';
+        });
+
+        confirmCancel.addEventListener('click', function() {
+            window.location.href = "{% url 'cancelar_cita' cita.id %}";
+        });
+
+        rescheduleButton.addEventListener('click', function() {
+            rescheduleModal.style.display = 'flex';
+        });
+
+        cancelReschedule.addEventListener('click', function() {
+            rescheduleModal.style.display = 'none';
+        });
+
+        confirmReschedule.addEventListener('click', function() {
+            window.location.href = "{% url 'reprogramar_cita' cita.id %}";
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target === cancelModal) {
+                cancelModal.style.display = 'none';
+            }
+            if (event.target === rescheduleModal) {
+                rescheduleModal.style.display = 'none';
+            }
+        });
+    });
+</script>
+
 {% endblock %}

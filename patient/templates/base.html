@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BetterHealth{% endblock %}</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body class="{% block bodyclass %}{% endblock %}">
@@ -16,7 +16,7 @@
                 <span>BetterHealth</span>
             </div>
             <div class="nav-links">
-                <a href="{% url 'home' %}">Pedir cita</a> <!-- Enlace agregado para la página de inicio -->
+                <a href="{% url 'home' %}">Pedir cita</a>
                 {% if user.is_authenticated %}
                     <a href="{% url 'profile' %}">Perfil</a>
                     <a href="{% url 'logout' %}">Cerrar sesión</a>
