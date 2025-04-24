@@ -79,27 +79,21 @@ def settings_view(request):
 def contact_view(request):
     return render(request, 'contact.html')
 
-
+@login_required
 def programar_cita(request):
     if request.method == 'POST':
         form = CitaForm(request.POST)
         if form.is_valid():
             cita = form.save(commit=False)
-            cita.usuario = request.user  # Asumiendo que usas autenticación
+            cita.usuario = request.user
             cita.save()
 
-            # Agregar mensaje de éxito con los detalles de la cita
-            messages.success(request,
-                             f'Cita guardada correctamente: {cita.fecha} a las {cita.hora} para el servicio {cita.servicio}.')
-
-            # Redirigir a la página de mis citas
-            return redirect(
-                'programar_cita')  # Asegúrate de que 'mis_citas' sea el nombre correcto de tu URL de mis citas
+            # Pasa la cita como contexto a la plantilla de confirmación
+            return render(request, 'cita_confirmacion.html', {'cita': cita})
     else:
         form = CitaForm()
 
     return render(request, 'programar_cita.html', {'form': form})
-
 
 def mis_citas(request):
     citas = Cita.objects.all()

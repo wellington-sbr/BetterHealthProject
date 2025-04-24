@@ -18,10 +18,22 @@ class PatientProfile(models.Model):
         return self.user.email
 
 class Cita(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    servicio_choices = [
+        ("Consulta médica general", "Consulta médica general"),
+        ("Consulta de especialidad (Cardiología)", "Consulta de especialidad (Cardiología)"),
+        ("Consulta de especialidad (Dermatología)", "Consulta de especialidad (Dermatología)"),
+        ("Consulta de especialidad (Neurología)", "Consulta de especialidad (Neurología)"),
+        ("Análisis de sangre completo", "Análisis de sangre completo"),
+        ("Electrocardiograma (ECG)", "Electrocardiograma (ECG)"),
+        ("Resonancia Magnética (RMN)", "Resonancia Magnética (RMN)"),
+        ("Radiografía de tórax", "Radiografía de tórax"),
+        ("Colonoscopia", "Colonoscopia"),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)  # Relación con el usuario
+    servicio = models.CharField(max_length=255, choices=servicio_choices)
     fecha = models.DateField()
     hora = models.TimeField()
-    servicio = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"Cita para {self.usuario} el {self.fecha} a las {self.hora}"
+        return f'Cita de {self.usuario.username} para {self.servicio} el {self.fecha} a las {self.hora}'

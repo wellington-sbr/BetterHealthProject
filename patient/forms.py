@@ -28,9 +28,11 @@ class PatientProfileForm(forms.ModelForm):
 
 class CitaForm(forms.ModelForm):
     class Meta:
-        model = Cita
+        model = Cita  # Vinculamos este formulario con el modelo Cita
         fields = ['servicio', 'fecha', 'hora']
+
+        # Puedes personalizar los widgets si lo necesitas
         widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date'}),
-            'hora': forms.TimeInput(attrs={'type': 'time'}),
+            'fecha': forms.DateInput(attrs={'type': 'date'}),  # Establecemos el tipo de campo para la fecha
+            'hora': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),  # Establecemos el tipo para la hora
         }

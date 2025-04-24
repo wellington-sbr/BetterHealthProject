@@ -6,18 +6,34 @@
     <div class="container">
         <h1 class="page-title">Programar Nueva Cita</h1>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-success">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
+        <!-- Solo el formulario, sin mensajes ni botones extra -->
         <form method="post">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Guardar cita</button>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="servicio">Selecciona un servicio</label>
+                        {{ form.servicio }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="fecha">Selecciona la fecha de la cita</label>
+                        {{ form.fecha }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="hora">Selecciona la hora de la cita</label>
+                        {{ form.hora }}
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar cita</button>
         </form>
     </div>
 {% endblock %}
