@@ -84,9 +84,9 @@ def login_view(request):
                 if staff.role == 'admin':
                     return redirect('panel_administrativo')
                 else:
-                    return redirect('profile')  # Si es otro rol de staff
+                    return redirect('profile')
             except StaffProfile.DoesNotExist:
-                return redirect('profile')  # Paciente u otro usuario
+                return redirect('profile')  #
         else:
             messages.error(request, 'Credenciales incorrectas. Inténtalo de nuevo.')
     else:
@@ -172,43 +172,66 @@ def detalle_cita(request, cita_id):
 @login_required
 def cancelar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
-    profile = StaffProfile.objects.get(user=request.user)
 
-    if profile.role != 'admin':
+    try:
+        profile = StaffProfile.objects.get(user=request.user)
+        servicio = cita.servicio
+        fecha = cita.fecha
+
+        cita.delete()
+
+        messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
+
+        return redirect('mis_citas')
+
+    except StaffProfile.DoesNotExist:
         if cita.usuario != request.user:
             messages.error(request, "No tienes permiso para cancelar esta cita.")
             return redirect('mis_citas')
 
-    servicio = cita.servicio
-    fecha = cita.fecha
+        servicio = cita.servicio
+        fecha = cita.fecha
 
-    cita.delete()
+        cita.delete()
 
-    messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
+        messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
 
-    return redirect('mis_citas')
+        return redirect('mis_citas')
 
 
 @login_required
 def reprogramar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
-    profile = StaffProfile.objects.get(user=request.user)
 
-    if profile.role != 'admin':
+    try:
+
+        profile = StaffProfile.objects.get(user=request.user)
+        if request.method == 'POST':
+            form = ReprogramarCitaForm(request.POST, instance=cita)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
+                return redirect('detalle_cita', cita_id=cita.id)
+        else:
+            form = ReprogramarCitaForm(instance=cita)
+
+        return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
+
+    except StaffProfile.DoesNotExist:
         if cita.usuario != request.user:
             messages.error(request, "No tienes permiso para reprogramar esta cita.")
             return redirect('mis_citas')
 
-    if request.method == 'POST':
-        form = ReprogramarCitaForm(request.POST, instance=cita)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
-            return redirect('detalle_cita', cita_id=cita.id)
-    else:
-        form = ReprogramarCitaForm(instance=cita)
+        if request.method == 'POST':
+            form = ReprogramarCitaForm(request.POST, instance=cita)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
+                return redirect('detalle_cita', cita_id=cita.id)
+        else:
+            form = ReprogramarCitaForm(instance=cita)
 
-    return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
+        return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
 
 @login_required
 def admin_calendar(request):
