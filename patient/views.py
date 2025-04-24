@@ -91,15 +91,12 @@ def programar_cita(request):
 
             return render(request, 'cita_confirmacion.html', {'cita': cita})
         else:
-            # Si hay errores de validación en el formulario
             if 'fecha' in form.errors:
-                # Buscar si el error está relacionado con fin de semana
                 for error in form.errors.get('fecha', []):
                     if "Solo se permiten días de lunes a viernes" in error:
                         messages.error(request,
                                        'Por favor, seleccione un día entre semana (lunes a viernes) para su cita.')
                         break
-            # También puedes manejar otros errores si es necesario
     else:
         form = CitaForm()
 
@@ -108,12 +105,10 @@ def programar_cita(request):
 def mis_citas(request):
     citas = Cita.objects.all()
 
-    # Filtrado por servicio
     servicio = request.GET.get('servicio')
     if servicio:
         citas = citas.filter(servicio__icontains=servicio)
 
-    # Filtrado por fecha
     fecha = request.GET.get('fecha')
     if fecha:
         citas = citas.filter(fecha=fecha)

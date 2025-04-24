@@ -6,7 +6,6 @@
     <div class="container">
         <h1 class="page-title">Programar Nueva Cita</h1>
 
-        <!-- Solo el formulario, sin mensajes ni botones extra -->
         <form method="post">
             {% csrf_token %}
             <div class="row">
@@ -48,11 +47,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (fechaInput) {
         fechaInput.addEventListener('change', function () {
             const fechaSeleccionada = new Date(this.value);
-            const diaSemana = fechaSeleccionada.getDay(); // 0 = domingo, 6 = sábado
+            const diaSemana = fechaSeleccionada.getDay();
 
             if (diaSemana === 0 || diaSemana === 6) {
                 mensajeError.style.display = 'block';
-                this.value = ''; // Limpiar campo
+                this.value = '';
             } else {
                 mensajeError.style.display = 'none';
             }

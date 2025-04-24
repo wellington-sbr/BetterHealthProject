@@ -30,7 +30,7 @@ class Cita(models.Model):
         ("Colonoscopia", "Colonoscopia"),
     ]
 
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)  # Relación con el usuario
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     servicio = models.CharField(max_length=255, choices=servicio_choices)
     fecha = models.DateField()
     hora = models.TimeField()

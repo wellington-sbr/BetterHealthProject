@@ -40,7 +40,6 @@ class CitaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CitaForm, self).__init__(*args, **kwargs)
 
-        # Generar horas válidas de 9:00–13:00 y 15:00–20:00 en intervalos de 30 minutos
         HORAS_VALIDAS = [
             (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
             for h in list(range(9, 13)) + list(range(15, 20))
@@ -58,7 +57,6 @@ class CitaForm(forms.ModelForm):
 
     def clean_fecha(self):
         fecha = self.cleaned_data['fecha']
-        # weekday(): lunes=0, domingo=6
         if fecha.weekday() >= 5:
             raise forms.ValidationError("Solo se permiten días de lunes a viernes.")
         return fecha
