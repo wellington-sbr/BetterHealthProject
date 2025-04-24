@@ -17,6 +17,13 @@ Including another URLconf
 # from django.contrib import admin
 from django.urls import path
 
+from django.contrib import admin
+from django.urls import path, include
+from django.shortcuts import redirect
+
 urlpatterns = [
-    #    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),
+    path('', lambda request: redirect('login')),  # Redirige la raíz a /login/
+    path('', include('patient.urls')),
+    # Incluye las rutas de la app 'patients'
 ]

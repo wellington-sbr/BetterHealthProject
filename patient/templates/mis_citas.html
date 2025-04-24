@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Citas - BetterHealth{% endblock %}
+
+{% block content %}
+<div class="appointments-container">
+    <h1 class="appointments-title page-title">Mis Citas</h1>
+
+    <!-- Filtro de citas -->
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label for="servicio">Servicio</label>
+            <input type="text" name="servicio" id="servicio" placeholder="Filtrar por servicio" value="{{ request.GET.servicio }}">
+        </div>
+        <div class="filter-group">
+            <label for="fecha">Fecha</label>
+            <input type="date" name="fecha" id="fecha" value="{{ request.GET.fecha }}">
+        </div>
+        <button type="submit" class="button primary">Filtrar</button>
+    </form>
+
+    {% if citas %}
+        <div class="appointments-grid">
+            {% for cita in citas %}
+                <a href="{% url 'detalle_cita' cita.id %}" class="appointment-card">
+                    <div class="appointment-date">{{ cita.fecha }} a las {{ cita.hora }}</div>
+                    <div class="appointment-service">{{ cita.servicio }}</div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No tienes citas agendadas.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
