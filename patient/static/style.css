@@ -1,17 +1,17 @@
 :root {
-    --primary: #4CA1DD; /* Azul más claro */
-    --success: #7ECBEF;
-    --gray-light: #F5F5F5;
-    --gray-dark: #03222F;
-    --error: #FF5F5F;
-    --white: #ffffff;
-    --light-blue: #EBF5FF; /* Azul muy claro para fondo */
+    --primary: #005F99; /* Azul Profesional from guide */
+    --success: #4CAF50; /* Verde Salud from guide */
+    --gray-light: #F5F5F5; /* Matches guide */
+    --gray-dark: #333333; /* Text color from guide */
+    --error: #D32F2F; /* Rojo Alerta from guide */
+    --white: #ffffff; /* Matches guide */
+    --light-blue: #EBF5FF; /* Keep existing light blue for contrast */
 }
 
 body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: var(--light-blue);
+    font-family: 'Inter', 'Open Sans', 'Segoe UI', sans-serif; /* Updated to prioritize fonts from guide */
+    background: var(--gray-light);
     color: var(--gray-dark);
     min-height: 100vh;
     display: flex;
@@ -73,16 +73,18 @@ main {
     max-width: 500px;
     margin: 2rem auto;
     background: var(--white);
-    padding: 2rem;
-    border-radius: 10px;
+    padding: 24px; /* Adjusted to match guide */
+    border-radius: 12px; /* Updated to match card spec */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box; /* Asegura que el padding no afecte el tamaño total */
+    box-sizing: border-box;
 }
 
 .form h1 {
     margin-bottom: 1.5rem;
     color: var(--primary);
     text-align: center;
+    font-size: 36px; /* H1 size from guide */
+    font-weight: bold;
 }
 
 .form-group {
@@ -93,48 +95,85 @@ main {
     display: block;
     margin-bottom: 0.5rem;
     color: var(--gray-dark);
+    font-size: 16px;
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.75rem;
+    padding: 12px; /* Updated to match guide */
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 8px; /* Updated to match guide */
     box-sizing: border-box;
+}
+
+.form-group input:focus {
+    border-color: var(--primary); /* Focus state from guide */
+    outline: none;
 }
 
 .error-message {
     color: var(--error);
-    font-size: 0.875rem;
+    font-size: 14px; /* Small text from guide */
     margin-top: 0.25rem;
+    font-style: italic; /* Added as per form validation specs */
 }
 
 .button {
-    padding: 0.75rem 1.5rem;
+    display: inline-block;
+    padding: 12px 24px; /* Updated to match guide */
     border: none;
-    border-radius: 5px;
+    border-radius: 8px; /* Updated to match guide */
     color: var(--white);
-    font-weight: bold;
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    width: 100%;
-    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
 }
 
 .button.primary {
     background-color: var(--primary);
+    color: white;
+    width: auto;
 }
 
 .button.primary:hover {
-    background-color: #3b8bc3;
+    background-color: #004d7a; /* Darker version of primary */
 }
 
 .button.success {
     background-color: var(--success);
+    color: white;
 }
 
 .button.success:hover {
-    background-color: #69b8df;
+    background-color: #3d8b40; /* Darker version of success */
+}
+
+.button.secondary {
+    background-color: var(--white);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.button.secondary:hover {
+    background-color: var(--gray-light);
+}
+
+.button.danger {
+    background-color: var(--error);
+    color: var(--white);
+}
+
+.button.danger:hover {
+    background-color: #b71c1c; /* Darker version of error */
+}
+
+.button:disabled {
+    background-color: var(--gray-light);
+    color: #999;
+    cursor: not-allowed;
 }
 
 .link-text {
@@ -155,17 +194,17 @@ main {
 .messages li {
     padding: 0.75rem;
     margin-bottom: 0.5rem;
-    border-radius: 5px;
+    border-radius: 8px; /* Updated to match guide */
 }
 
 .messages li.success {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: #e8f5e9; /* Light green background */
+    color: var(--success);
 }
 
 .messages li.error {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #ffebee; /* Light red background */
+    color: var(--error);
 }
 
 .footer {
@@ -185,11 +224,11 @@ main {
 }
 
 .profile-title, .page-title {
-    font-size: 36px;
+    font-size: 36px; /* H1 size from guide */
     font-weight: bold;
-    color: #333333;
+    color: var(--gray-dark);
     margin-bottom: 32px;
-    border-bottom: 2px solid #005F99;
+    border-bottom: 2px solid var(--primary);
     padding-bottom: 8px;
 }
 
@@ -218,7 +257,7 @@ main {
     width: 150px;
     height: 150px;
     border-radius: 50%;
-    border: 3px solid #005F99;
+    border: 3px solid var(--primary);
     overflow: hidden;
     cursor: pointer;
     margin: 0 auto;
@@ -228,8 +267,8 @@ main {
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background-color: #005F99;
-    color: #FFFFFF;
+    background-color: var(--primary);
+    color: var(--white);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -248,29 +287,29 @@ main {
 }
 
 .profile-info {
-    background-color: #FFFFFF;
-    border-radius: 12px;
+    background-color: var(--white);
+    border-radius: 12px; /* Updated to match card spec */
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    padding: 24px;
+    padding: 24px; /* Updated to match guide */
     margin: 20px 0;
     text-align: center;
     width: 100%;
     max-width: 250px;
-    border: 1px solid #F5F5F5;
+    border: 1px solid var(--gray-light);
 }
 
 .profile-name {
     font-family: 'Inter', 'Open Sans', sans-serif;
-    font-size: 28px;
-    font-weight: 600;
-    color: #333333;
+    font-size: 28px; /* H2 size from guide */
+    font-weight: 600; /* Semi-bold from guide */
+    color: var(--gray-dark);
     margin: 0;
     padding-bottom: 12px;
-    border-bottom: 2px solid #005F99;
+    border-bottom: 2px solid var(--primary);
 }
 
 .profile-email {
-    font-size: 16px;
+    font-size: 16px; /* Body text from guide */
     color: #666666;
     margin-top: 8px;
 }
@@ -297,6 +336,7 @@ main {
 .profile-picture-wrapper:hover .edit-icon {
     opacity: 1;
 }
+
 /* Right side of the profile  */
 .profile-right-section {
     flex: 2;
@@ -309,28 +349,29 @@ main {
 .profile-nav-card {
     display: block;
     background-color: var(--white);
-    border: 2px solid var(--primary);
-    border-radius: 10px;
-    padding: 24px;
+    border-left: 5px solid var(--primary);
+    border-radius: 12px; /* Updated to match card spec */
+    padding: 24px; /* Updated to match guide */
     text-decoration: none;
     color: var(--gray-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .profile-nav-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .profile-nav-card h3 {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 22px; /* H3 size from guide */
+    font-weight: 600; /* Semi-bold from guide */
     color: var(--primary);
     margin-bottom: 8px;
 }
 
 .profile-nav-card p {
-    font-size: 16px;
+    font-size: 16px; /* Body text from guide */
     color: #666666;
 }
 
@@ -343,13 +384,13 @@ main {
 
 .content-box {
     background-color: var(--white);
-    border-radius: 10px;
-    padding: 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 12px; /* Updated to match card spec */
+    padding: 24px; /* Updated to match guide */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .info-text {
-    font-size: 16px;
+    font-size: 16px; /* Body text from guide */
     color: #666666;
     margin-bottom: 24px;
 }
@@ -362,20 +403,21 @@ main {
 }
 
 .settings-card {
-    background-color: var(--light-blue);
-    border-radius: 8px;
-    padding: 20px;
+    background-color: var(--white);
+    border-radius: 12px; /* Updated to match card spec */
+    padding: 24px; /* Updated to match guide */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .settings-card h2 {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 28px; /* H2 size from guide */
+    font-weight: 600; /* Semi-bold from guide */
     color: var(--gray-dark);
     margin-bottom: 12px;
 }
 
 .settings-card p {
-    font-size: 16px;
+    font-size: 16px; /* Body text from guide */
     color: #666666;
     margin-bottom: 16px;
 }
@@ -399,8 +441,8 @@ main {
 
 .contact-info h2,
 .contact-form-container h2 {
-    font-size: 28px;
-    font-weight: 600;
+    font-size: 28px; /* H2 size from guide */
+    font-weight: 600; /* Semi-bold from guide */
     color: var(--gray-dark);
     margin-bottom: 20px;
 }
@@ -410,19 +452,19 @@ main {
 }
 
 .contact-method h3 {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 22px; /* H3 size from guide */
+    font-weight: 600; /* Semi-bold from guide */
     color: var(--primary);
     margin-bottom: 8px;
 }
 
 .contact-method p {
-    font-size: 16px;
+    font-size: 16px; /* Body text from guide */
     margin-bottom: 4px;
 }
 
 .contact-method .detail {
-    font-size: 14px;
+    font-size: 14px; /* Small text from guide */
     color: #666666;
 }
 
@@ -439,25 +481,6 @@ main {
 .empty-state p {
     margin-bottom: 16px;
     color: #666666;
-}
-
-/* Botón secundario */
-.button.secondary {
-    display: inline-block;
-    background-color: var(--white);
-    color: var(--primary);
-    border: 1px solid var(--primary);
-    padding: 0.75rem 1.5rem;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.2s, color 0.2s;
-    width: auto;
-    text-align: center;
-}
-
-.button.secondary:hover {
-    background-color: var(--light-blue);
 }
 
 /* Modificación para el botón primario en los nuevos componentes */
@@ -478,6 +501,7 @@ main {
     .settings-sections {
         grid-template-columns: 1fr;
     }
+
     .profile-info {
         max-width: 100%;
     }
@@ -486,41 +510,6 @@ main {
         font-size: 24px;
     }
 }
-@media (max-width: 768px) {
-    .profile-content {
-        flex-direction: column;
-    }
-
-    .profile-left-section,
-    .profile-right-section {
-        width: 100%;
-    }
-
-}
-
-.button {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    text-decoration: none; /* Quitar subrayado */
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.button.primary {
-    background-color: var(--primary);
-    color: white;
-    width: auto; /* ← ¡Esto evita que se extienda como bloque completo! */
-}
-
-.button.primary:hover {
-    background-color: #2980b9; /* Un azul un poco más oscuro al pasar el mouse */
-}
-
 
 .appointments-container {
     max-width: 1000px;
@@ -538,8 +527,8 @@ main {
 .appointment-card {
     background-color: var(--white);
     border-left: 5px solid var(--primary);
-    padding: 20px;
-    border-radius: 10px;
+    padding: 24px; /* Updated to match guide */
+    border-radius: 12px; /* Updated to match card spec */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease;
 }
@@ -557,7 +546,60 @@ main {
 }
 
 .appointment-service {
-    font-size: 16px;
+    font-size: 16px; /* Body text from guide */
     color: #555;
 }
 
+/* Estilos para tablas según guía */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+table th {
+    background-color: var(--gray-light);
+    font-weight: bold;
+    text-align: left;
+    padding: 12px;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Zebra striping */
+}
+
+table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+table td:last-child {
+    text-align: right; /* For action icons */
+}
+
+@media (max-width: 768px) {
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+/* Slogan styling */
+.brand-slogan {
+    font-size: 16px;
+    font-style: italic;
+    color: var(--white);
+    margin-top: 4px;
+    font-weight: normal;
+}
+
+/* When used in header/navbar */
+.navbar .logo-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar .logo-container .brand-slogan {
+    font-size: 14px;
+    margin-top: 0;
+}
