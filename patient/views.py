@@ -89,7 +89,6 @@ def programar_cita(request):
             cita.usuario = request.user
             cita.save()
 
-            # Pasa la cita como contexto a la plantilla de confirmación
             return render(request, 'cita_confirmacion.html', {'cita': cita})
         else:
             # Si hay errores de validación en el formulario
