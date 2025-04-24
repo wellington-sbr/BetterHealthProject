@@ -6,3 +6,7 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+/BetterHealthProject/__pycache__/
+/patient/__pycache__/
+/patient/migrations/__pycache__/
+

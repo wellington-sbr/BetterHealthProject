@@ -15,7 +15,10 @@ urlpatterns = [
     path('settings/', views.settings_view, name='settings'),
     path('contact/', views.contact_view, name='contact'),
     path('programar-cita/', views.programar_cita, name='programar_cita'),
-path('mis-citas/', views.mis_citas, name='mis_citas')
+    path('mis-citas/', views.mis_citas, name='mis_citas'),
+    path('cita/<int:cita_id>/', views.detalle_cita, name='detalle_cita'),
+path('accounts/login/', views.login_view, name='login'),
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
