@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Panel Administrativo - Better Health{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tipografías -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="{% static 'admin.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Barra lateral -->
+        <aside class="sidebar">
+            <h2>Better Health</h2>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'admin_panel' %}">Inicio</a></li>
+                    <li><a href="{% url 'admin_calendar' %}">Calendario</a></li>
+                    <li><a href="{% url 'mis_citas' %}">Todas las Citas</a></li>
+                    <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

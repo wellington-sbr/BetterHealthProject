@@ -1,5 +1,3 @@
-
-
 from django.conf.urls.static import static
 from django.urls import path
 from BetterHealthProject import settings
@@ -17,7 +15,12 @@ urlpatterns = [
     path('programar-cita/', views.programar_cita, name='programar_cita'),
     path('mis-citas/', views.mis_citas, name='mis_citas'),
     path('cita/<int:cita_id>/', views.detalle_cita, name='detalle_cita'),
-path('accounts/login/', views.login_view, name='login'),
+    path('accounts/login/', views.login_view, name='login'),
+    path('admin-panel/', views.appointments_view, name='admin_panel'),
+    path('admin-calendar/', views.admin_calendar, name='calendar_admin'),
+    path('citas-json/', views.citas_json, name='citas_json'),
+    path('register-staff/', views.register_staff, name='register_staff'),
+    path('panel-admin/', views.admin_panel, name='panel_administrativo'),
 
 ]
 if settings.DEBUG:
