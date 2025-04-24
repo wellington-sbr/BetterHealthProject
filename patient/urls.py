@@ -18,6 +18,10 @@ urlpatterns = [
     path('mis-citas/', views.mis_citas, name='mis_citas'),
     path('cita/<int:cita_id>/', views.detalle_cita, name='detalle_cita'),
     path('accounts/login/', views.login_view, name='login'),
+    path('admin-calendar/', views.admin_calendar, name='calendar_admin'),
+    path('citas-json/', views.citas_json, name='citas_json'),
+    path('register-staff/', views.register_staff, name='register_staff'),
+    path('admin-panel/', views.admin_panel, name='panel_administrativo'),
 
     path('cita/<int:cita_id>/cancelar/', views.cancelar_cita, name='cancelar_cita'),
     path('cita/<int:cita_id>/reprogramar/', views.reprogramar_cita, name='reprogramar_cita'),
