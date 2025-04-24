@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-from patient.forms import PatientProfileForm, CustomUserCreationForm
+from patient.forms import PatientProfileForm, CustomUserCreationForm, ReprogramarCitaForm
 from patient.models import PatientProfile
 from .forms import CitaForm
 from .models import Cita
@@ -130,3 +130,23 @@ def cancelar_cita(request, cita_id):
     messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
 
     return redirect('mis_citas')
+
+
+@login_required
+def reprogramar_cita(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+
+    if cita.usuario != request.user:
+        messages.error(request, "No tienes permiso para reprogramar esta cita.")
+        return redirect('mis_citas')
+
+    if request.method == 'POST':
+        form = ReprogramarCitaForm(request.POST, instance=cita)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
+            return redirect('detalle_cita', cita_id=cita.id)
+    else:
+        form = ReprogramarCitaForm(instance=cita)
+
+    return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})

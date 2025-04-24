@@ -20,6 +20,7 @@ urlpatterns = [
     path('accounts/login/', views.login_view, name='login'),
 
     path('cita/<int:cita_id>/cancelar/', views.cancelar_cita, name='cancelar_cita'),
+    path('cita/<int:cita_id>/reprogramar/', views.reprogramar_cita, name='reprogramar_cita'),
 
 ]
 if settings.DEBUG:
