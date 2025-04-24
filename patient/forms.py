@@ -55,3 +55,10 @@ class CitaForm(forms.ModelForm):
                 (datetime.time(15, 0) <= hora_obj < datetime.time(20, 0))):
             raise forms.ValidationError("La hora debe estar entre 9:00–13:00 o 15:00–20:00")
         return hora_str
+
+    def clean_fecha(self):
+        fecha = self.cleaned_data['fecha']
+        # weekday(): lunes=0, domingo=6
+        if fecha.weekday() >= 5:
+            raise forms.ValidationError("Solo se permiten días de lunes a viernes.")
+        return fecha
