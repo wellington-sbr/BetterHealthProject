@@ -14,6 +14,54 @@
         <p><strong>Hora:</strong> {{ cita.hora }}</p>
     </div>
 
-    <a href="{% url 'mis_citas' %}" class="button primary">Volver a mis citas</a>
+    <div class="appointment-actions">
+        <a href="{% url 'mis_citas' %}" class="button primary">Volver a mis citas</a>
+        <button id="cancel-button" class="button danger">Cancelar cita</button>
+    </div>
+
+    <!-- Modal de confirmación para cancelar cita -->
+    <div id="cancel-modal" class="modal">
+        <div class="modal-content">
+            <h2>Confirmar cancelación</h2>
+            <p>¿Estás seguro de que deseas cancelar esta cita?</p>
+            <p>Esta acción no se puede deshacer.</p>
+            <div class="modal-actions">
+                <button id="confirm-cancel" class="button danger">Sí, cancelar cita</button>
+                <button id="cancel-action" class="button secondary">No, mantener cita</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cancelButton = document.getElementById('cancel-button');
+        const cancelModal = document.getElementById('cancel-modal');
+        const confirmCancel = document.getElementById('confirm-cancel');
+        const cancelAction = document.getElementById('cancel-action');
+
+        // Muestra el modal al hacer clic en "Cancelar cita"
+        cancelButton.addEventListener('click', function() {
+            cancelModal.style.display = 'flex';
+        });
+
+        // Cierra el modal si se hace clic en "No, mantener cita"
+        cancelAction.addEventListener('click', function() {
+            cancelModal.style.display = 'none';
+        });
+
+        // Procesa la cancelación si se confirma
+        confirmCancel.addEventListener('click', function() {
+            window.location.href = "{% url 'cancelar_cita' cita.id %}";
+        });
+
+        // Cierra el modal si se hace clic fuera de él
+        window.addEventListener('click', function(event) {
+            if (event.target === cancelModal) {
+                cancelModal.style.display = 'none';
+            }
+        });
+    });
+</script>
+
 {% endblock %}
