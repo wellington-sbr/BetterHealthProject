@@ -131,8 +131,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # tu app personalizada
-    'patient',  # cambia si tu app tiene otro nombre
+    'patient',
+
 ]
 LOGIN_REDIRECT_URL = 'profile'
 MEDIA_URL = '/media/'

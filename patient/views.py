@@ -112,3 +112,21 @@ def mis_citas(request):
 def detalle_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
     return render(request, 'detalle_cita.html', {'cita': cita})
+
+
+@login_required
+def cancelar_cita(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+
+    if cita.usuario != request.user:
+        messages.error(request, "No tienes permiso para cancelar esta cita.")
+        return redirect('mis_citas')
+
+    servicio = cita.servicio
+    fecha = cita.fecha
+
+    cita.delete()
+
+    messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
+
+    return redirect('mis_citas')
