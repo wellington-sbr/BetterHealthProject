@@ -1,13 +1,53 @@
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-from patient.forms import PatientProfileForm, CustomUserCreationForm, ReprogramarCitaForm
-from patient.models import PatientProfile
+from patient.forms import PatientProfileForm, CustomUserCreationForm, ReprogramarCitaForm, StaffCreationForm
+from patient.models import PatientProfile, StaffProfile
 from .forms import CitaForm
 from .models import Cita
+
+
+@login_required
+def admin_panel(request):
+    try:
+        profile = StaffProfile.objects.get(user=request.user)
+        if profile.role != 'admin':
+            messages.error(request, "No tienes permisos para acceder a esta sección.")
+            return redirect('home')
+    except StaffProfile.DoesNotExist:
+        messages.error(request, "No tienes permisos para acceder a esta sección.")
+        return redirect('home')
+
+
+    citas = Cita.objects.all()
+    return render(request, 'panel_administrativo.html', {'citas': citas})
+
+
+def staff_required(role=None):
+    def decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            if not hasattr(request.user, 'staffprofile'):
+                return HttpResponseForbidden("No tienes permiso para acceder a esta sección.")
+            if role and request.user.staffprofile.role != role:
+                return HttpResponseForbidden("Permisos insuficientes.")
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
+def register_staff(request):
+    if request.method == 'POST':
+        form = StaffCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()  # Esto ya crea el User y el StaffProfile dentro del form
+            messages.success(request, "Nuevo miembro del personal registrado.")
+            return redirect('panel_administrativo')
+    else:
+        form = StaffCreationForm()
+    return render(request, 'register_staff.html', {'form': form})
 
 @login_required
 def home(request):
@@ -36,7 +76,15 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f'¡Bienvenido/a, {user.username}!')
-            return redirect('home')
+
+            try:
+                staff = StaffProfile.objects.get(user=user)
+                if staff.role == 'admin':
+                    return redirect('panel_administrativo')
+                else:
+                    return redirect('profile')  # Si es otro rol de staff
+            except StaffProfile.DoesNotExist:
+                return redirect('home')
         else:
             messages.error(request, 'Credenciales incorrectas. Inténtalo de nuevo.')
     else:
@@ -52,18 +100,22 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    profile, created = PatientProfile.objects.get_or_create(user=request.user)
-    if created:
-        profile.name = request.user.username
-        profile.save()
+    try:
+        staff = StaffProfile.objects.get(user=request.user)
+        return render(request, 'staff_profile.html', {'profile': staff})
+    except StaffProfile.DoesNotExist:
+        profile, created = PatientProfile.objects.get_or_create(user=request.user)
+        if created:
+            profile.name = request.user.username
+            profile.save()
 
-    if request.method == 'POST' and request.FILES.get('profile_picture'):
-        profile.profile_picture = request.FILES['profile_picture']
-        profile.save()
-        messages.success(request, 'Foto de perfil actualizada correctamente.')
-        return redirect('profile')
+        if request.method == 'POST' and request.FILES.get('profile_picture'):
+            profile.profile_picture = request.FILES['profile_picture']
+            profile.save()
+            messages.success(request, 'Foto de perfil actualizada correctamente.')
+            return redirect('profile')
 
-    return render(request, 'profile.html', {'profile': profile})
+        return render(request, 'profile.html', {'profile': profile})
 
 
 @login_required
@@ -127,10 +179,12 @@ def detalle_cita(request, cita_id):
 @login_required
 def cancelar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
+    profile = StaffProfile.objects.get(user=request.user)
 
-    if cita.usuario != request.user:
-        messages.error(request, "No tienes permiso para cancelar esta cita.")
-        return redirect('mis_citas')
+    if profile.role != 'admin':
+        if cita.usuario != request.user:
+            messages.error(request, "No tienes permiso para cancelar esta cita.")
+            return redirect('mis_citas')
 
     servicio = cita.servicio
     fecha = cita.fecha
@@ -145,10 +199,12 @@ def cancelar_cita(request, cita_id):
 @login_required
 def reprogramar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
+    profile = StaffProfile.objects.get(user=request.user)
 
-    if cita.usuario != request.user:
-        messages.error(request, "No tienes permiso para reprogramar esta cita.")
-        return redirect('mis_citas')
+    if profile.role != 'admin':
+        if cita.usuario != request.user:
+            messages.error(request, "No tienes permiso para reprogramar esta cita.")
+            return redirect('mis_citas')
 
     if request.method == 'POST':
         form = ReprogramarCitaForm(request.POST, instance=cita)
@@ -160,3 +216,26 @@ def reprogramar_cita(request, cita_id):
         form = ReprogramarCitaForm(instance=cita)
 
     return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
+
+@login_required
+def admin_calendar(request):
+    return render(request, 'calendar_admin.html')
+
+@login_required
+def citas_json(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    citas = Cita.objects.filter(fecha__range=[start, end])
+    eventos = []
+
+    for cita in citas:
+        eventos.append({
+            "id": cita.id,
+            "title": f"{cita.servicio} - {cita.usuario.username}",
+            "start": cita.fecha.isoformat(),
+            "url": reverse('detalle_cita', args=[cita.id])
+        })
+
+    return JsonResponse(eventos, safe=False)
+

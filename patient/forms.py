@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Cita
-from patient.models import PatientProfile
+from .models import Cita, PatientProfile, StaffProfile
 import datetime
 
 class CustomUserCreationForm(UserCreationForm):
@@ -20,6 +19,28 @@ class CustomUserCreationForm(UserCreationForm):
             user.save()
             PatientProfile.objects.create(user=user, name=self.cleaned_data['name'])
         return user
+
+class StaffCreationForm(forms.ModelForm):
+    username = forms.CharField(label="Nombre de usuario")
+    password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
+    role = forms.ChoiceField(choices=StaffProfile.ROLES, label="Rol")
+
+    class Meta:
+        model = StaffProfile
+        fields = ['name', 'profile_picture', 'role']  # role se repite, está bien
+
+    def save(self, commit=True):
+        user = User.objects.create_user(
+            username=self.cleaned_data['username'],
+            password=self.cleaned_data['password'],
+        )
+        staff_profile = super().save(commit=False)
+        staff_profile.user = user
+        staff_profile.role = self.cleaned_data['role']
+        if commit:
+            staff_profile.save()
+        return staff_profile
+
 
 class PatientProfileForm(forms.ModelForm):
     class Meta:
@@ -40,7 +61,6 @@ class CitaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CitaForm, self).__init__(*args, **kwargs)
 
-        # Generar horas válidas de 9:00–13:00 y 15:00–20:00 en intervalos de 30 minutos
         HORAS_VALIDAS = [
             (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
             for h in list(range(9, 13)) + list(range(15, 20))
@@ -58,7 +78,6 @@ class CitaForm(forms.ModelForm):
 
     def clean_fecha(self):
         fecha = self.cleaned_data['fecha']
-        # weekday(): lunes=0, domingo=6
         if fecha.weekday() >= 5:
             raise forms.ValidationError("Solo se permiten días de lunes a viernes.")
         return fecha
