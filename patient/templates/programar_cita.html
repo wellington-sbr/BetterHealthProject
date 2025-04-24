@@ -20,6 +20,9 @@
                     <div class="form-group">
                         <label for="fecha">Selecciona la fecha de la cita</label>
                         {{ form.fecha }}
+                        <div id="fecha-error" class="text-danger" style="display: none; margin-top: 5px;">
+                            No se puede seleccionar un fin de semana. Por favor elige un día entre semana.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -36,4 +39,25 @@
             <button type="submit" class="btn btn-primary">Guardar cita</button>
         </form>
     </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fechaInput = document.querySelector('input[type="date"]');
+    const mensajeError = document.getElementById('fecha-error');
+
+    if (fechaInput) {
+        fechaInput.addEventListener('change', function () {
+            const fechaSeleccionada = new Date(this.value);
+            const diaSemana = fechaSeleccionada.getDay(); // 0 = domingo, 6 = sábado
+
+            if (diaSemana === 0 || diaSemana === 6) {
+                mensajeError.style.display = 'block';
+                this.value = ''; // Limpiar campo
+            } else {
+                mensajeError.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
