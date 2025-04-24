@@ -172,10 +172,12 @@ def detalle_cita(request, cita_id):
 @login_required
 def cancelar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
+    profile = StaffProfile.objects.get(user=request.user)
 
-    if cita.usuario != request.user:
-        messages.error(request, "No tienes permiso para cancelar esta cita.")
-        return redirect('mis_citas')
+    if profile.role != 'admin':
+        if cita.usuario != request.user:
+            messages.error(request, "No tienes permiso para cancelar esta cita.")
+            return redirect('mis_citas')
 
     servicio = cita.servicio
     fecha = cita.fecha
@@ -190,10 +192,12 @@ def cancelar_cita(request, cita_id):
 @login_required
 def reprogramar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
+    profile = StaffProfile.objects.get(user=request.user)
 
-    if cita.usuario != request.user:
-        messages.error(request, "No tienes permiso para reprogramar esta cita.")
-        return redirect('mis_citas')
+    if profile.role != 'admin':
+        if cita.usuario != request.user:
+            messages.error(request, "No tienes permiso para reprogramar esta cita.")
+            return redirect('mis_citas')
 
     if request.method == 'POST':
         form = ReprogramarCitaForm(request.POST, instance=cita)
