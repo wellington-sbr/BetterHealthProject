@@ -9,7 +9,7 @@ from patient.models import PatientProfile
 from .forms import CitaForm
 from .models import Cita
 
-
+@login_required
 def home(request):
     return render(request, 'home.html')
 
@@ -21,7 +21,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Cuenta creada exitosamente.')
-            return redirect('profile')
+            return redirect('home')
         else:
             messages.error(request, 'Por favor corrige los errores del formulario.')
     else:
@@ -36,7 +36,7 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f'¡Bienvenido/a, {user.username}!')
-            return redirect('profile')
+            return redirect('home')
         else:
             messages.error(request, 'Credenciales incorrectas. Inténtalo de nuevo.')
     else:
