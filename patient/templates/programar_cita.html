@@ -41,4 +41,27 @@
         <button type="submit" class="btn btn-primary">Guardar cita</button>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fechaInput = document.querySelector('input[type="date"]');
+    const mensajeError = document.getElementById('fecha-error');
+
+    if (fechaInput) {
+        fechaInput.addEventListener('change', function () {
+            const fechaSeleccionada = new Date(this.value);
+            const diaSemana = fechaSeleccionada.getDay(); // 0 = domingo, 6 = sábado
+
+            if (diaSemana === 0 || diaSemana === 6) {
+                mensajeError.textContent = "No se puede seleccionar este día porque es un fin de semana.";
+                mensajeError.style.display = 'block';
+                this.value = '';
+            } else {
+                mensajeError.textContent = "";
+                mensajeError.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -79,6 +79,7 @@ def settings_view(request):
 def contact_view(request):
     return render(request, 'contact.html')
 
+
 @login_required
 def programar_cita(request):
     if request.method == 'POST':
@@ -90,6 +91,16 @@ def programar_cita(request):
 
             # Pasa la cita como contexto a la plantilla de confirmación
             return render(request, 'cita_confirmacion.html', {'cita': cita})
+        else:
+            # Si hay errores de validación en el formulario
+            if 'fecha' in form.errors:
+                # Buscar si el error está relacionado con fin de semana
+                for error in form.errors.get('fecha', []):
+                    if "Solo se permiten días de lunes a viernes" in error:
+                        messages.error(request,
+                                       'Por favor, seleccione un día entre semana (lunes a viernes) para su cita.')
+                        break
+            # También puedes manejar otros errores si es necesario
     else:
         form = CitaForm()
 
