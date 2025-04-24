@@ -15,7 +15,7 @@ from django.http import HttpResponseForbidden
 def admin_panel(request):
     try:
         profile = StaffProfile.objects.get(user=request.user)
-        if profile.role != 'administrative':
+        if profile.role != 'admin':
             messages.error(request, "No tienes permisos para acceder a esta sección.")
             return redirect('home')
     except StaffProfile.DoesNotExist:
@@ -76,7 +76,7 @@ def login_view(request):
 
             try:
                 staff = StaffProfile.objects.get(user=user)
-                if staff.role == 'administrative':
+                if staff.role == 'admin':
                     return redirect('panel_administrativo')
                 else:
                     return redirect('profile')  # Si es otro rol de staff
