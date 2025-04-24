@@ -74,15 +74,14 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'¡Bienvenido/a, {user.username}!')
 
-            # Verifica si el usuario tiene perfil de staff
             try:
                 staff = StaffProfile.objects.get(user=user)
                 if staff.role == 'administrative':
                     return redirect('panel_administrativo')
+                else:
+                    return redirect('profile')  # Si es otro rol de staff
             except StaffProfile.DoesNotExist:
-                pass
-
-            return redirect('profile')  # Por defecto
+                return redirect('profile')  # Paciente u otro usuario
         else:
             messages.error(request, 'Credenciales incorrectas. Inténtalo de nuevo.')
     else:

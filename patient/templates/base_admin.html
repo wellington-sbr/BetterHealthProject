@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <title>{% block title %}Panel Administrativo - Better Health{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,8 +18,8 @@
             <h2>Better Health</h2>
             <nav>
                 <ul>
-                    <li><a href="{% url 'admin_panel' %}">Inicio</a></li>
-                    <li><a href="{% url 'admin_calendar' %}">Calendario</a></li>
+                    <li><a href="{% url 'panel_administrativo' %}">Inicio</a></li>
+                    <li><a href="{% url 'calendar_admin' %}">Calendario</a></li>
                     <li><a href="{% url 'mis_citas' %}">Todas las Citas</a></li>
                     <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
                 </ul>
