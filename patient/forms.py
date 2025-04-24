@@ -10,7 +10,7 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password1', 'password2')  # Correct field names
+        fields = ('username', 'email', 'password1', 'password2')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -28,11 +28,21 @@ class PatientProfileForm(forms.ModelForm):
 
 class CitaForm(forms.ModelForm):
     class Meta:
-        model = Cita  # Vinculamos este formulario con el modelo Cita
+        model = Cita
         fields = ['servicio', 'fecha', 'hora']
 
-        # Puedes personalizar los widgets si lo necesitas
         widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date'}),  # Establecemos el tipo de campo para la fecha
-            'hora': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),  # Establecemos el tipo para la hora
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'hora': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),
+        }
+
+
+class ReprogramarCitaForm(forms.ModelForm):
+    class Meta:
+        model = Cita
+        fields = ['fecha', 'hora']
+
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'hora': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),
         }
