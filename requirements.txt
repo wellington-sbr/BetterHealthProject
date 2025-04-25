@@ -12,3 +12,5 @@ sqlparse==0.5.3
 typing_extensions==4.13.2
 uvicorn==0.34.2
 whitenoise==6.9.0
+dj-database-url
+psycopg2-binary
