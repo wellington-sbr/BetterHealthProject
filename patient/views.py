@@ -4,9 +4,15 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-
-from patient.forms import PatientProfileForm, CustomUserCreationForm, ReprogramarCitaForm, StaffCreationForm
-from patient.models import PatientProfile, StaffProfile
+from django.urls import reverse
+from django.contrib.admin.views.decorators import staff_member_required
+from .forms import PatientProfileForm, CustomUserCreationForm, CitaForm, StaffCreationForm
+from .models import PatientProfile, Cita, StaffProfile
+from django.http import JsonResponse
+from django.utils.dateparse import parse_date
+from django.http import HttpResponseForbidden
+from patient.forms import PatientProfileForm, CustomUserCreationForm, ReprogramarCitaForm
+from patient.models import PatientProfile
 from .forms import CitaForm
 from .models import Cita
 
@@ -82,7 +88,7 @@ def login_view(request):
                 if staff.role == 'admin':
                     return redirect('panel_administrativo')
                 else:
-                    return redirect('profile')  # Si es otro rol de staff
+                    return redirect('profile')
             except StaffProfile.DoesNotExist:
                 return redirect('home')
         else:
@@ -143,15 +149,12 @@ def programar_cita(request):
 
             return render(request, 'cita_confirmacion.html', {'cita': cita})
         else:
-            # Si hay errores de validación en el formulario
             if 'fecha' in form.errors:
-                # Buscar si el error está relacionado con fin de semana
                 for error in form.errors.get('fecha', []):
                     if "Solo se permiten días de lunes a viernes" in error:
                         messages.error(request,
                                        'Por favor, seleccione un día entre semana (lunes a viernes) para su cita.')
                         break
-            # También puedes manejar otros errores si es necesario
     else:
         form = CitaForm()
 
@@ -160,12 +163,10 @@ def programar_cita(request):
 def mis_citas(request):
     citas = Cita.objects.all()
 
-    # Filtrado por servicio
     servicio = request.GET.get('servicio')
     if servicio:
         citas = citas.filter(servicio__icontains=servicio)
 
-    # Filtrado por fecha
     fecha = request.GET.get('fecha')
     if fecha:
         citas = citas.filter(fecha=fecha)
@@ -179,43 +180,66 @@ def detalle_cita(request, cita_id):
 @login_required
 def cancelar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
-    profile = StaffProfile.objects.get(user=request.user)
 
-    if profile.role != 'admin':
+    try:
+        profile = StaffProfile.objects.get(user=request.user)
+        servicio = cita.servicio
+        fecha = cita.fecha
+
+        cita.delete()
+
+        messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
+
+        return redirect('mis_citas')
+
+    except StaffProfile.DoesNotExist:
         if cita.usuario != request.user:
             messages.error(request, "No tienes permiso para cancelar esta cita.")
             return redirect('mis_citas')
 
-    servicio = cita.servicio
-    fecha = cita.fecha
+        servicio = cita.servicio
+        fecha = cita.fecha
 
-    cita.delete()
+        cita.delete()
 
-    messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
+        messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
 
-    return redirect('mis_citas')
+        return redirect('mis_citas')
 
 
 @login_required
 def reprogramar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
-    profile = StaffProfile.objects.get(user=request.user)
 
-    if profile.role != 'admin':
+    try:
+
+        profile = StaffProfile.objects.get(user=request.user)
+        if request.method == 'POST':
+            form = ReprogramarCitaForm(request.POST, instance=cita)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
+                return redirect('detalle_cita', cita_id=cita.id)
+        else:
+            form = ReprogramarCitaForm(instance=cita)
+
+        return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
+
+    except StaffProfile.DoesNotExist:
         if cita.usuario != request.user:
             messages.error(request, "No tienes permiso para reprogramar esta cita.")
             return redirect('mis_citas')
 
-    if request.method == 'POST':
-        form = ReprogramarCitaForm(request.POST, instance=cita)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
-            return redirect('detalle_cita', cita_id=cita.id)
-    else:
-        form = ReprogramarCitaForm(instance=cita)
+        if request.method == 'POST':
+            form = ReprogramarCitaForm(request.POST, instance=cita)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
+                return redirect('detalle_cita', cita_id=cita.id)
+        else:
+            form = ReprogramarCitaForm(instance=cita)
 
-    return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
+        return render(request, 'reprogramar_cita.html', {'form': form, 'cita': cita})
 
 @login_required
 def admin_calendar(request):
