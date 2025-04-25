@@ -1,3 +1,4 @@
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -14,6 +15,7 @@ from patient.forms import PatientProfileForm, CustomUserCreationForm, Reprograma
 from patient.models import PatientProfile
 from .forms import CitaForm
 from .models import Cita
+
 
 @login_required
 def admin_panel(request):
@@ -53,6 +55,7 @@ def register_staff(request):
         form = StaffCreationForm()
     return render(request, 'register_staff.html', {'form': form})
 
+@login_required
 def home(request):
     return render(request, 'home.html')
 
@@ -64,12 +67,13 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Cuenta creada exitosamente.')
-            return redirect('profile')
+            return redirect('home')
         else:
             messages.error(request, 'Por favor corrige los errores del formulario.')
     else:
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -86,17 +90,19 @@ def login_view(request):
                 else:
                     return redirect('profile')
             except StaffProfile.DoesNotExist:
-                return redirect('profile')  #
+                return redirect('home')
         else:
             messages.error(request, 'Credenciales incorrectas. Inténtalo de nuevo.')
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
 
+
 def logout_view(request):
     logout(request)
     messages.info(request, 'Has cerrado sesión correctamente.')
     return redirect('login')
+
 
 @login_required
 def profile_view(request):
@@ -122,9 +128,11 @@ def profile_view(request):
 def appointments_view(request):
     return render(request, 'appointments.html')
 
+
 @login_required
 def settings_view(request):
     return render(request, 'settings.html')
+
 
 def contact_view(request):
     return render(request, 'contact.html')
