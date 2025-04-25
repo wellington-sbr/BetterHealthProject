@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Citas - BetterHealth{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Mis Citas</h1>
+
+    <div class="content-box">
+        <p class="info-text">Aquí podrás ver y gestionar todas tus citas médicas.</p>
+
+        <div class="appointments-list">
+            <div class="empty-state">
+                <p>No tienes citas programadas actualmente.</p>
+                <a href="{% url 'programar_cita' %}" class="button primary">Programar nueva cita</a>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

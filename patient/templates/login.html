@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar sesión - BetterHealth{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Iniciar sesión</h1>
+    <form method="post" class="form">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="error-message">{{ error }}</div>
+                {% endfor %}
+
+                {% if field.name == 'fecha' %}
+                    <div id="fecha-error" class="error-message text-danger" style="display:none;"></div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="error-message">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <button type="submit" class="button primary">Iniciar sesión</button>
+    </form>
+    <p class="link-text">¿No tienes una cuenta? <a href="{% url 'register' %}">Regístrate</a></p>
+</div>
+
+{% endblock %}
