@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'BetterHealthProject.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a/betterhealth_db',
+        default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a.frankfurt-postgres.render.com/betterhealth_db',
         conn_max_age=600
     )
 }
