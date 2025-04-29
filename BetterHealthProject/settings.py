@@ -80,16 +80,14 @@ WSGI_APPLICATION = 'BetterHealthProject.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+# postgresql://URL:PORT@USER:PASSWORD/DB_NAME
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        # Replace this value with your local database's connection string.
+        default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a/betterhealth_db',
+        conn_max_age=600
+    )
 }
 
 
