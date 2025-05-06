@@ -30,8 +30,10 @@ SECRET_KEY = 'django-insecure-fn)b#$h$_^7ad*+nqhe&*x1o$eaitc@0qq*5_#=mu*e2$2=ze-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['betterhealth.onrender.com']
-
+ALLOWED_HOSTS = ['betterhealthproject.onrender.com', '0.0.0.0']
+CSRF_TRUSTED_ORIGINS = [
+    'betterhealthproject.onrender.com',
+]
 
 # Application definition
 
