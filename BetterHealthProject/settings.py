@@ -32,7 +32,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['betterhealthproject.onrender.com', '0.0.0.0']
 CSRF_TRUSTED_ORIGINS = [
-    'betterhealthproject.onrender.com',
+    'https://betterhealthproject.onrender.com',
 ]
 
 # Application definition
