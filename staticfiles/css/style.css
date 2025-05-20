@@ -362,8 +362,8 @@ main {
 }
 
 .profile-nav-card h3 {
-    font-size: 22px; /* H3 size from guide */
-    font-weight: 600; /* Semi-bold from guide */
+    font-size: 22px;
+    font-weight: 600;
     color: var(--primary);
     margin-bottom: 8px;
 }
@@ -593,7 +593,6 @@ table td:last-child {
     margin-top: 0;
 }
 
-/* Estilos para el modal de confirmación */
 .modal {
     display: none;
     position: fixed;

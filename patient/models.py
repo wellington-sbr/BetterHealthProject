@@ -4,7 +4,6 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import User
 
-
 class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
@@ -30,10 +29,23 @@ class Cita(models.Model):
         ("Colonoscopia", "Colonoscopia"),
     ]
 
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)  # Relación con el usuario
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     servicio = models.CharField(max_length=255, choices=servicio_choices)
     fecha = models.DateField()
     hora = models.TimeField()
 
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio} el {self.fecha} a las {self.hora}'
+
+class StaffProfile(models.Model):
+    ROLES = [
+        ('admin', 'Administrativo'),
+        ('finanzas', 'Finanzas'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLES)
+    name = models.CharField(max_length=100)
+    profile_picture = models.ImageField(upload_to='staff_profiles/', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.get_role_display()})"
