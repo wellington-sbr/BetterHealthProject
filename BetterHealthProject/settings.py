@@ -14,6 +14,8 @@ from pathlib import Path
 
 # Import dj-database-url at the beginning of the file.
 import dj_database_url
+from dotenv import load_dotenv
+load_dotenv()
 
 import os
 
@@ -85,11 +87,17 @@ WSGI_APPLICATION = 'BetterHealthProject.wsgi.application'
 # postgresql://URL:PORT@USER:PASSWORD/DB_NAME
 
 DATABASES = {
-    'default': dj_database_url.config(
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+
+    # UNCOMMENT THIS FOR PRODUCTION ONLY
+    # 'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a.frankfurt-postgres.render.com/betterhealth_db',
-        conn_max_age=600
-    )
+    #       default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a.frankfurt-postgres.render.com/betterhealth_db',
+    #       conn_max_age=600
+    #   )
 }
 
 
@@ -141,7 +149,7 @@ if not DEBUG:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'patient/static',
+    BASE_DIR / 'betterhealth/static',
 ]
 
 # Default primary key field type
@@ -155,7 +163,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'patient',
+    'betterhealth',
 
 ]
 LOGIN_REDIRECT_URL = 'home'

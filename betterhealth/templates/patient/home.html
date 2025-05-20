@@ -1,0 +1,78 @@
+{% extends 'patient/base.html' %}
+
+{% block title %}Pedir cita - BetterHealth{% endblock %}
+
+{% block content %}
+<main class="home-main">
+    <h1 class="welcome-text">
+        Bienvenido a BetterHealth{% if user.is_authenticated %}{% endif %}!
+    </h1>
+    <p>Selecciona lo que desees realizar.</p>
+
+    <div class="options-container">
+        <a href="{% url 'programar_cita' %}" class="option-card">
+            <h2>Pedir Cita</h2>
+            <p>Agenda una nueva cita médica fácilmente.</p>
+        </a>
+
+        <a href="{% url 'mis_citas' %}" class="option-card">
+            <h2>Reprogramar Cita</h2>
+            <p>Consulta o reprograma tus citas existentes.</p>
+        </a>
+
+        <a href="{% url 'profile' %}" class="option-card">
+            <h2>Mi Perfil</h2>
+            <p>Revisa y edita tu información personal.</p>
+        </a>
+    </div>
+</main>
+
+<style>
+.home-main {
+    text-align: center;
+    padding: 2rem;
+}
+
+.welcome-text {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.options-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.option-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 260px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--gray-dark);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    color: var(--primary);
+}
+
+.option-card h2 {
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.option-card p {
+    font-size: 14px;
+    color: var(--gray-dark);
+}
+</style>
+{% endblock %}
