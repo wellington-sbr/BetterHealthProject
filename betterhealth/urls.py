@@ -22,13 +22,16 @@ urlpatterns = [
 
     path('listado_facturas/', views.listado_facturas, name='listado_facturas'),
     path('panel-finanzas/', views.finances_panel, name='panel_finanzas'),
-
+    path('detalle_cita_admin/<int:cita_id>/', views.detalle_cita_admin, name='detalle_cita_admin'),
+    path('cita/<int:cita_id>/confirmar/', views.confirmar_cita, name='confirmar_cita'),
     path('cita/<int:cita_id>/cancelar/', views.cancelar_cita, name='cancelar_cita'),
     path('cita/<int:cita_id>/reprogramar/', views.reprogramar_cita, name='reprogramar_cita'),
     path("staff/import-services/", views.import_services_view, name="import_services"),
     path("staff/add-service/", views.add_service_view, name="add_service"),
     path("staff/delete-service/<int:service_id>/", views.delete_service_view, name="delete_service"),
     path("staff/export-services/", views.export_services_csv, name="export_services_csv"),
+    path('cita/<int:cita_id>/invoice/', views.generar_factura, name='generar_factura'),
+
 ]
 
 if settings.DEBUG:

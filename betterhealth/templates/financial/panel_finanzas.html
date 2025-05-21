@@ -309,8 +309,7 @@
                     </span>
                 </td>
                 <td class="action-buttons">
-                    <a href="{% url 'generar_factura' cita_id=cita.id %}" class="btn btn-primary">Ver</a>
-                    <a href="{% url 'descargar_factura' cita_id=cita.id %}" class="btn btn-secondary">Descargar</a>
+                    <a href="{% url 'generar_factura' cita.id %}" class="btn btn-primary">Ver</a>
                 </td>
             </tr>
             {% empty %}
