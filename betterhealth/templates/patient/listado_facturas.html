@@ -280,8 +280,7 @@
                 
                 <div class="factura-actions">
                     <a href="{% url 'generar_factura' cita_id=cita.id %}" class="btn btn-primary">Ver Factura</a>
-                    <a href="{% url 'descargar_factura' cita_id=cita.id %}" class="btn btn-secondary">Descargar</a>
-                </div>
+                    <div>
             </div>
         </div>
         {% endfor %}

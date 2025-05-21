@@ -128,7 +128,10 @@ def register_staff(request):
         if form.is_valid():
             form.save()  # Esto ya crea el User y el StaffProfile dentro del form
             messages.success(request, "Nuevo miembro del personal registrado.")
-            return redirect('panel_administrativo')
+            if(form.cleaned_data['role'] == 'admin'):
+                return redirect('panel_administrativo')
+            else:
+                return redirect('panel_finanzas')
     else:
         form = StaffCreationForm()
     return render(request, 'register_staff.html', {'form': form})
