@@ -27,6 +27,7 @@ urlpatterns = [
     path('cita/<int:cita_id>/confirmar/', views.confirmar_cita, name='confirmar_cita'),
     path('cita/<int:cita_id>/cancelar/', views.cancelar_cita, name='cancelar_cita'),
     path('cita/<int:cita_id>/reprogramar/', views.reprogramar_cita, name='reprogramar_cita'),
+    path('cita/<int:cita_id>/invoice/', views.generar_factura, name='generar_factura'),
 
 ]
 if settings.DEBUG:
