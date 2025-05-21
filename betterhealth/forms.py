@@ -1,8 +1,16 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Cita, PatientProfile, StaffProfile
+from .models import Cita, PatientProfile, StaffProfile, Service
 import datetime
+
+class ServiceForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = ["name", "description", "service_type", "price", "included_in_mutual", "duration_minutes", "requires_mutual_authorization"]
+
+class CSVUploadForm(forms.Form):
+    csv_file = forms.FileField(label="Subir archivo CSV")
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label='Correo Electrónico')

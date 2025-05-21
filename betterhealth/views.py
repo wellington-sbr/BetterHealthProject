@@ -1,4 +1,6 @@
 import uuid
+import csv
+import io
 from datetime import timezone, datetime
 
 from django.db.models import Count, Sum
@@ -12,16 +14,23 @@ from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 
 from .api_client import MutuaApiClient
-from .forms import PatientProfileForm, CustomUserCreationForm, CitaForm, StaffCreationForm
-from .models import PatientProfile, Cita, StaffProfile
-from django.http import JsonResponse
+from .forms import PatientProfileForm, CustomUserCreationForm, CitaForm, StaffCreationForm, ReprogramarCitaForm, CSVUploadForm, ServiceForm
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.utils.dateparse import parse_date
-from django.http import HttpResponseForbidden
-from betterhealth.forms import PatientProfileForm, CustomUserCreationForm, ReprogramarCitaForm
-from betterhealth.models import PatientProfile
-from .forms import CitaForm
-from .models import Cita
+from .models import PatientProfile, Cita, Service, StaffProfile
 
+
+
+
+# Probablemente toque borrar
+""" 
+from rest_framework import viewsets
+from .serializers import ServiceSerializer
+
+class ServiceViewSet(viewsets.ModelViewSet):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+"""
 
 @login_required
 def admin_panel(request):
@@ -128,7 +137,10 @@ def register_staff(request):
         if form.is_valid():
             form.save()  # Esto ya crea el User y el StaffProfile dentro del form
             messages.success(request, "Nuevo miembro del personal registrado.")
-            return redirect('panel_administrativo')
+            if(form.cleaned_data['role'] == 'admin'):
+                return redirect('panel_administrativo')
+            else:
+                return redirect('panel_finanzas')
     else:
         form = StaffCreationForm()
     return render(request, 'register_staff.html', {'form': form})
@@ -260,6 +272,10 @@ def detalle_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
     return render(request, 'patient/detalle_cita.html', {'cita': cita})
 
+def detalle_cita_admin(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+    return render(request, 'staff/detalles_cita_admin.html', {'cita': cita})
+
 
 @login_required
 def cancelar_cita(request, cita_id):
@@ -290,6 +306,27 @@ def cancelar_cita(request, cita_id):
 
         return redirect('mis_citas')
 
+@login_required
+def confirmar_cita(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+
+    try:
+        profile = StaffProfile.objects.get(user=request.user)
+        servicio = cita.servicio
+        fecha = cita.fecha
+
+        cita.estado = 'confirmado'
+        cita.save()
+
+        messages.success(request, f"La cita para {servicio} el día {fecha} ha sido confirmada correctamente.")
+
+
+
+        return render(request, 'financial/invoice_templates/client_invoice.html', {'cita': cita})
+
+    except StaffProfile.DoesNotExist:
+
+        return redirect('panel_administrativo')
 
 @login_required
 def reprogramar_cita(request, cita_id):
@@ -522,3 +559,88 @@ def listado_facturas(request):
         'servicios': Cita.objects.values_list('servicio', flat=True).distinct(),  # Obtener lista de servicios
     })
 
+
+def import_services_view(request):
+    services = Service.objects.all()
+
+    if request.method == "POST":
+        form = CSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES["csv_file"]
+            decoded_file = csv_file.read().decode("utf-8")
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+
+            for row in reader:
+                try:
+                    # Check if the service already exists
+                    service, created = Service.objects.get_or_create(
+                        name=row['Servicio'],
+                        defaults={
+                            "description": row['Descripción'],
+                            "service_type": row['Tipo de Servicio'],
+                            "price": float(row['Precio (€)'].replace(',', '.')),
+                            "included_in_mutual": row['Incluido en Mutua'].lower() == 'sí',
+                            "duration_minutes": int(row['Duración (min)']),
+                            "requires_mutual_authorization": row['Requiere autorización mutua'].lower() == 'sí',
+                        }
+                    )
+
+                    if created:
+                        messages.success(request, f"Servicio '{service.name}' añadido correctamente.")
+                    else:
+                        messages.info(request, f"Servicio '{service.name}' ya existe en la base de datos.")
+
+                except ValueError as e:
+                    messages.error(request, f"Error al procesar servicio '{row['Servicio']}': {e}")
+
+            messages.success(request, "Los servicios se han importado exitosamente.")
+            return redirect("import_services")
+
+    else:
+        form = CSVUploadForm()
+        service_form = ServiceForm()
+
+    return render(request, "staff/import_services.html", {
+        "form": form,
+        "service_form": service_form,
+        "services": services
+    })
+
+def add_service_view(request):
+    if request.method == "POST":
+        form = ServiceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Servicio añadido correctamente.")
+            return redirect("import_services")
+    return redirect("import_services")
+
+
+def delete_service_view(request, service_id):
+    service = Service.objects.get(id=service_id)
+    service.delete()
+    messages.success(request, "Servicio eliminado correctamente.")
+    return redirect("import_services")
+
+def export_services_csv(request):
+    services = Service.objects.all()
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = "attachment; filename=services_catalog.csv"
+
+    writer = csv.writer(response)
+    writer.writerow(["Servicio", "Descripción", "Tipo de Servicio", "Precio (€)", "Incluido en Mutua", "Duración (min)",
+                     "Requiere autorización mutua"])
+
+    for service in services:
+        writer.writerow([
+            service.name,
+            service.description,
+            service.service_type,
+            service.price,
+            "Sí" if service.included_in_mutual else "No",
+            service.duration_minutes,
+            "Sí" if service.requires_mutual_authorization else "No"
+        ])
+
+    return response
