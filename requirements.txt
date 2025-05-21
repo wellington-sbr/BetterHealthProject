@@ -14,3 +14,5 @@ uvicorn==0.34.2
 whitenoise==6.9.0
 dj-database-url
 psycopg2-binary
+
+django-environ~=0.12.0
