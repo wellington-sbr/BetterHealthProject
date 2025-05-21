@@ -143,6 +143,14 @@ def register_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+
+            # Solo crear perfil si no existe
+            profile, created = PatientProfile.objects.get_or_create(user=user)
+            profile.name = user.username
+            profile.tiene_mutua = request.POST.get('tiene_mutua') == 'on'
+            profile.numero_poliza = request.POST.get('numero_poliza', '').strip() if profile.tiene_mutua else ''
+            profile.save()
+
             login(request, user)
             messages.success(request, 'Cuenta creada exitosamente.')
             return redirect('home')
@@ -151,8 +159,6 @@ def register_view(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'patient/register.html', {'form': form})
-
-
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)

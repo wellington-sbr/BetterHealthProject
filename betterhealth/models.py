@@ -9,6 +9,9 @@ class PatientProfile(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     name = models.CharField(max_length=100)
 
+    tiene_mutua = models.BooleanField(default=False)
+    numero_poliza = models.CharField(max_length=100, blank=True, null=True)
+
     def __str__(self):
         return self.name
 
