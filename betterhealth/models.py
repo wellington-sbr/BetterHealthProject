@@ -29,10 +29,13 @@ class Cita(models.Model):
         ("Colonoscopia", "Colonoscopia"),
     ]
 
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    servicio = models.CharField(max_length=255, choices=servicio_choices)
+
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    servicio = models.CharField(max_length=255)
     fecha = models.DateField()
     hora = models.TimeField()
+    importe = models.DecimalField(max_digits=10, decimal_places=2)
+    estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'), ('pendiente', 'Pendiente')])
 
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio} el {self.fecha} a las {self.hora}'
@@ -49,3 +52,14 @@ class StaffProfile(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_role_display()})"
+
+class Invoice(models.Model):
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
+    date = models.DateField()
+    cita = models.ForeignKey(Cita, on_delete=models.CASCADE)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    paid = models.BooleanField(default=False)
+    mutua_discount = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Factura de {self.patient.name} para {self.cita.servicio} el {self.date} con un importe de {self.total}"

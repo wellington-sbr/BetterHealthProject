@@ -9,4 +9,7 @@
 /BetterHealthProject/__pycache__/
 /patient/__pycache__/
 /patient/migrations/__pycache__/
-
+.env
+venv/
+pycache/
+*.pyc

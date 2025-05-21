@@ -1,10 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>{% block title %}Departamento de Finanzas - Better Health{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <h2>Better Health</h2>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'panel_finanzas' %}">Panel de Finanzas</a></li>
+                    <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+                </ul>
+            </nav>
+        </aside>
 
+        <main class="main-content">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
