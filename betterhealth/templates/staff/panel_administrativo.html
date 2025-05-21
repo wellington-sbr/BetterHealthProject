@@ -11,6 +11,7 @@
             <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Paciente</th>
             <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Servicio</th>
             <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Fecha</th>
+            <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Estado</th>
             <th style="text-align: left; padding: 12px;">Acciones</th>
         </tr>
     </thead>
@@ -20,8 +21,9 @@
             <td style="padding: 12px;">{{ cita.usuario.username }}</td>
             <td style="padding: 12px;">{{ cita.servicio }}</td>
             <td style="padding: 12px;">{{ cita.fecha }}</td>
+            <td style="padding: 12px;">{{ cita.estado }}</td>
             <td style="padding: 12px;">
-                <a href="{% url 'detalle_cita' cita.id %}" style="color: #005F99; font-weight: 500;">Ver</a>
+                <a href="{% url 'detalle_cita_admin' cita.id %}" style="color: #005F99; font-weight: 500;">Ver</a>
             </td>
         </tr>
         {% empty %}

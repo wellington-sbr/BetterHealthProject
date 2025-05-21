@@ -1,7 +1,4 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from django.contrib.auth.models import User
 
 class PatientProfile(models.Model):
@@ -34,8 +31,8 @@ class Cita(models.Model):
     servicio = models.CharField(max_length=255)
     fecha = models.DateField()
     hora = models.TimeField()
-    importe = models.DecimalField(max_digits=10, decimal_places=2)
-    estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'), ('pendiente', 'Pendiente')])
+    importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'),('confirmado', 'Confirmado'), ('pendiente', 'Pendiente')], default='pendiente')
 
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio} el {self.fecha} a las {self.hora}'

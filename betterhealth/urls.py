@@ -1,10 +1,7 @@
-
-
 from django.conf.urls.static import static
 from django.urls import path
 from BetterHealthProject import settings
 from . import views
-from .views import listado_facturas
 
 urlpatterns = [
     path('register/', views.register_view, name='register'),
@@ -24,9 +21,10 @@ urlpatterns = [
     path('register-staff/', views.register_staff, name='register_staff'),
     path('admin-panel/', views.admin_panel, name='panel_administrativo'),
 
-    path('listado_facturas/', listado_facturas, name='listado_facturas'),
+    path('listado_facturas/', views.listado_facturas, name='listado_facturas'),
     path('panel-finanzas/', views.finances_panel, name='panel_finanzas'),
-
+    path('detalle_cita_admin/<int:cita_id>/', views.detalle_cita_admin, name='detalle_cita_admin'),
+    path('cita/<int:cita_id>/confirmar/', views.confirmar_cita, name='confirmar_cita'),
     path('cita/<int:cita_id>/cancelar/', views.cancelar_cita, name='cancelar_cita'),
     path('cita/<int:cita_id>/reprogramar/', views.reprogramar_cita, name='reprogramar_cita'),
 
