@@ -1,0 +1,70 @@
+{% extends "staff/base_admin.html" %}
+
+{% block content %}
+<h2>Gestión de Servicios</h2>
+
+<!-- Import CSV -->
+<h3>Importar Servicios desde CSV</h3>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Subir CSV</button>
+</form>
+
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+        <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+
+<!-- Add New Service -->
+<h3>Agregar Nuevo Servicio</h3>
+<form method="post" action="{% url 'add_service' %}">
+    {% csrf_token %}
+    {{ service_form.as_p }}
+    <button type="submit">Añadir Servicio</button>
+</form>
+
+<hr>
+
+<!-- List of Services -->
+<h3>Servicios Registrados</h3>
+<table border="1">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Precio (€)</th>
+            <th>Duración</th>
+            <th>Opciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for service in services %}
+        <tr>
+            <td>{{ service.name }}</td>
+            <td>{{ service.service_type }}</td>
+            <td>{{ service.price }}</td>
+            <td>{{ service.duration_minutes }} min</td>
+            <td>
+                <form method="post" action="{% url 'delete_service' service.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+
+<!-- Export Services to CSV -->
+<h3>Exportar Servicios</h3>
+<a href="{% url 'export_services_csv' %}" class="button">Descargar CSV</a>
+
+{% endblock %}
