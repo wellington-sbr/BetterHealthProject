@@ -2,7 +2,7 @@ import uuid
 import csv
 import io
 from datetime import timezone, datetime
-
+from decimal import Decimal
 from django.db.models import Count, Sum
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,25 +12,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
-
+from django.core.paginator import Paginator
 from .api_client import MutuaApiClient
 from .forms import PatientProfileForm, CustomUserCreationForm, CitaForm, StaffCreationForm, ReprogramarCitaForm, CSVUploadForm, ServiceForm
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.utils.dateparse import parse_date
-from .models import PatientProfile, Cita, Service, StaffProfile
-
-
-
-
-# Probablemente toque borrar
-""" 
-from rest_framework import viewsets
-from .serializers import ServiceSerializer
-
-class ServiceViewSet(viewsets.ModelViewSet):
-    queryset = Service.objects.all()
-    serializer_class = ServiceSerializer
-"""
+from .models import PatientProfile, Cita, Service, StaffProfile, Invoice
 
 @login_required
 def admin_panel(request):
@@ -43,12 +30,15 @@ def admin_panel(request):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('home')
 
-
     citas = Cita.objects.all()
     return render(request, 'staff/panel_administrativo.html', {'citas': citas})
 
 @login_required
 def finances_panel(request):
+    """
+    Panel de Finanzas para visualizar estadísticas y transacciones.
+    """
+    # Verificar permisos del usuario
     try:
         profile = StaffProfile.objects.get(user=request.user)
         if profile.role != 'finanzas':
@@ -58,18 +48,18 @@ def finances_panel(request):
         messages.error(request, "No tienes permisos para acceder a esta sección.")
         return redirect('home')
 
-    # Filtros
+    # Aplicar filtros desde la solicitud
     servicio_filter = request.GET.get('servicio', '')
     fecha_inicio = request.GET.get('fecha_inicio', '')
     fecha_fin = request.GET.get('fecha_fin', '')
     estado = request.GET.get('estado', '')
 
-    # Consulta base para citas
-    citas_query = Cita.objects.all()
+    # Consulta base de citas
+    citas_query = Cita.objects.select_related('servicio').all()
 
     # Aplicar filtros
     if servicio_filter:
-        citas_query = citas_query.filter(servicio=servicio_filter)
+        citas_query = citas_query.filter(servicio__name=servicio_filter)
 
     if fecha_inicio:
         citas_query = citas_query.filter(fecha__gte=fecha_inicio)
@@ -77,38 +67,27 @@ def finances_panel(request):
     if fecha_fin:
         citas_query = citas_query.filter(fecha__lte=fecha_fin)
 
+    if estado:
+        citas_query = citas_query.filter(estado=estado)
+
     # Calcular estadísticas
     estadisticas = {
-        'citas_por_servicio': list(Cita.objects.values('servicio').annotate(total=Count('id')).order_by('-total')),
+        'citas_por_servicio': list(Cita.objects.values('servicio__name').annotate(total=Count('id')).order_by('-total')),
         'total_citas': Cita.objects.count(),
         'citas_ultimo_mes': Cita.objects.filter(fecha__gte=datetime.now(timezone.utc).replace(day=1)).count()
     }
 
-    # Calcular ingresos estimados
-    precios = {
-        "Consulta médica general": 60.00,
-        "Consulta de especialidad (Cardiología)": 120.00,
-        "Consulta de especialidad (Dermatología)": 100.00,
-        "Consulta de especialidad (Neurología)": 130.00,
-        "Análisis de sangre completo": 75.00,
-        "Electrocardiograma (ECG)": 80.00,
-        "Resonancia Magnética (RMN)": 250.00,
-        "Radiografía de tórax": 60.00,
-        "Colonoscopia": 200.00,
-    }
-
-    ingresos_totales = 0
-    for cita in Cita.objects.all():
-        ingresos_totales += precios.get(cita.servicio, 100.00) * 1.21  # Precio + IVA
+    # Calcular ingresos estimados dinámicamente desde la base de datos
+    ingresos_totales = citas_query.aggregate(total_ingresos=Sum('servicio__price'))['total_ingresos'] or 0
+    ingresos_totales *= Decimal("1.21")  # Aplicar IVA del 21%
 
     estadisticas['ingresos_estimados'] = ingresos_totales
 
-    # Lista de servicios para el filtro
-    servicios = [choice[0] for choice in Cita.servicio_choices]
+    # Obtener lista de servicios dinámicamente
+    servicios = list(Service.objects.values_list('name', flat=True))
 
-    # Paginar resultados
-    from django.core.paginator import Paginator
-    paginator = Paginator(citas_query.order_by('-fecha'), 10)  # 10 citas por página
+    # Paginar resultados (10 citas por página)
+    paginator = Paginator(citas_query.order_by('-fecha'), 10)
     page = request.GET.get('page', 1)
     citas = paginator.get_page(page)
 
@@ -236,25 +215,53 @@ def contact_view(request):
 
 @login_required
 def programar_cita(request):
+    """
+    Permite a los pacientes programar una nueva cita, asegurando disponibilidad de horario.
+    """
     if request.method == 'POST':
         form = CitaForm(request.POST)
         if form.is_valid():
             cita = form.save(commit=False)
             cita.usuario = request.user
-            cita.save()
 
+            # Validar que el servicio tiene horarios disponibles
+            horarios_disponibles = get_available_slots(cita.servicio.id, cita.fecha)
+            if cita.hora.strftime('%H:%M') not in horarios_disponibles:
+                messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
+                return redirect('programar_cita')
+
+            # Validar que la fecha no es fin de semana
+            if cita.fecha.weekday() in [5, 6]:  # 5 = Sábado, 6 = Domingo
+                messages.error(request, "Por favor, seleccione un día entre semana (lunes a viernes) para su cita.")
+                return redirect('programar_cita')
+
+            cita.save()
             return render(request, 'patient/cita_confirmacion.html', {'cita': cita})
-        else:
-            if 'fecha' in form.errors:
-                for error in form.errors.get('fecha', []):
-                    if "Solo se permiten días de lunes a viernes" in error:
-                        messages.error(request,
-                                       'Por favor, seleccione un día entre semana (lunes a viernes) para su cita.')
-                        break
     else:
         form = CitaForm()
 
     return render(request, 'patient/programar_cita.html', {'form': form})
+
+def get_available_slots(servicio_id, fecha):
+    """
+    Devuelve una lista de horarios disponibles para un servicio en una fecha específica.
+    Excluye horarios ya reservados y permite reusar citas canceladas.
+    """
+    # Obtener la duración del servicio desde la base de datos
+    servicio = get_object_or_404(Service, id=servicio_id)
+    duracion = servicio.duration_minutes
+
+    # Lista de horarios posibles en un día laboral (8:00 AM - 6:00 PM)
+    horarios_disponibles = [f"{h}:00" for h in range(8, 18)]  # Horas completas
+
+    # Buscar citas ya reservadas en esta fecha
+    citas_ocupadas = Cita.objects.filter(servicio=servicio, fecha=fecha, estado__in=['pendiente', 'confirmado'])
+
+    # Excluir horarios ocupados
+    ocupados = [cita.hora.strftime('%H:%M') for cita in citas_ocupadas]
+    horarios_libres = [hora for hora in horarios_disponibles if hora not in ocupados]
+
+    return horarios_libres
 
 def mis_citas(request):
     citas = Cita.objects.all()
@@ -281,87 +288,63 @@ def detalle_cita_admin(request, cita_id):
 def cancelar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
 
-    try:
-        profile = StaffProfile.objects.get(user=request.user)
-        servicio = cita.servicio
-        fecha = cita.fecha
+    if hasattr(request.user, 'staffprofile') or cita.usuario == request.user:
+        cita.estado = 'cancelada'
+        cita.save()
 
-        cita.delete()
+        messages.success(request, f"Tu cita para {cita.servicio.name} el {cita.fecha} ha sido cancelada correctamente.")
+    else:
+        messages.error(request, "No tienes permiso para cancelar esta cita.")
 
-        messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
-
-        return redirect('mis_citas')
-
-    except StaffProfile.DoesNotExist:
-        if cita.usuario != request.user:
-            messages.error(request, "No tienes permiso para cancelar esta cita.")
-            return redirect('mis_citas')
-
-        servicio = cita.servicio
-        fecha = cita.fecha
-
-        cita.delete()
-
-        messages.success(request, f"Tu cita para {servicio} el día {fecha} ha sido cancelada correctamente.")
-
-        return redirect('mis_citas')
+    return redirect('mis_citas')
 
 @login_required
 def confirmar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
 
-    try:
-        profile = StaffProfile.objects.get(user=request.user)
-        servicio = cita.servicio
-        fecha = cita.fecha
-
+    if hasattr(request.user, 'staffprofile'):
         cita.estado = 'confirmado'
         cita.save()
-
-        messages.success(request, f"La cita para {servicio} el día {fecha} ha sido confirmada correctamente.")
-
-
-
+        messages.success(request, f"La cita para {cita.servicio.name} el {cita.fecha} ha sido confirmada correctamente.")
         return render(request, 'financial/invoice_templates/client_invoice.html', {'cita': cita})
 
-    except StaffProfile.DoesNotExist:
-
-        return redirect('panel_administrativo')
+    return redirect('panel_administrativo')
 
 @login_required
 def reprogramar_cita(request, cita_id):
+    """
+    Permite a pacientes y personal reprogramar una cita, verificando disponibilidad.
+    """
     cita = get_object_or_404(Cita, id=cita_id)
 
-    try:
-
-        profile = StaffProfile.objects.get(user=request.user)
+    if hasattr(request.user, 'staffprofile') or cita.usuario == request.user:
         if request.method == 'POST':
             form = ReprogramarCitaForm(request.POST, instance=cita)
             if form.is_valid():
+                nueva_fecha = form.cleaned_data['fecha']
+                nueva_hora = form.cleaned_data['hora']
+
+                # Validar disponibilidad del nuevo horario
+                horarios_disponibles = get_available_slots(cita.servicio.id, nueva_fecha)
+                if nueva_hora.strftime('%H:%M') not in horarios_disponibles:
+                    messages.error(request, "Este horario no está disponible. Seleccione otro.")
+                    return redirect('reprogramar_cita', cita_id=cita.id)
+
+                # Validar que la nueva fecha no es fin de semana
+                if nueva_fecha.weekday() in [5, 6]:
+                    messages.error(request, "No se pueden agendar citas en fin de semana.")
+                    return redirect('reprogramar_cita', cita_id=cita.id)
+
                 form.save()
-                messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
+                messages.success(request, f"Tu cita para {cita.servicio.name} ha sido reprogramada correctamente.")
                 return redirect('detalle_cita', cita_id=cita.id)
         else:
             form = ReprogramarCitaForm(instance=cita)
 
         return render(request, 'patient/reprogramar_cita.html', {'form': form, 'cita': cita})
 
-    except StaffProfile.DoesNotExist:
-        if cita.usuario != request.user:
-            messages.error(request, "No tienes permiso para reprogramar esta cita.")
-            return redirect('mis_citas')
-
-        if request.method == 'POST':
-            form = ReprogramarCitaForm(request.POST, instance=cita)
-            if form.is_valid():
-                form.save()
-                messages.success(request, f"Tu cita para {cita.servicio} ha sido reprogramada correctamente.")
-                return redirect('detalle_cita', cita_id=cita.id)
-        else:
-            form = ReprogramarCitaForm(instance=cita)
-
-        return render(request, 'patient/reprogramar_cita.html', {'form': form, 'cita': cita})
-
+    messages.error(request, "No tienes permiso para reprogramar esta cita.")
+    return redirect('mis_citas')
 @login_required
 def admin_calendar(request):
     return render(request, 'staff/calendar_admin.html')
@@ -408,6 +391,12 @@ def generar_factura(request, cita_id):
     except PatientProfile.DoesNotExist:
         nombre_paciente = cita.usuario.username
 
+    # Obtener el servicio y su precio de la base de datos
+    servicio_obj = cita.servicio
+    precio_base = servicio_obj.price
+    iva = precio_base * Decimal("0.21")
+    total = precio_base + iva
+
     # Verificar si el paciente tiene cobertura de mutua
     mutua_api = MutuaApiClient()
     tiene_mutua = False
@@ -423,23 +412,6 @@ def generar_factura(request, cita_id):
     except Exception as e:
         # Si hay error en la API, asumimos que no tiene cobertura
         print(f"Error al verificar mutua: {e}")
-
-    # Calcular precios según el tipo de servicio
-    precios = {
-        "Consulta médica general": 60.00,
-        "Consulta de especialidad (Cardiología)": 120.00,
-        "Consulta de especialidad (Dermatología)": 100.00,
-        "Consulta de especialidad (Neurología)": 130.00,
-        "Análisis de sangre completo": 75.00,
-        "Electrocardiograma (ECG)": 80.00,
-        "Resonancia Magnética (RMN)": 250.00,
-        "Radiografía de tórax": 60.00,
-        "Colonoscopia": 200.00,
-    }
-
-    precio_base = precios.get(cita.servicio, 100.00)  # Precio por defecto si no se encuentra
-    iva = precio_base * 0.21  # 21% de IVA
-    total = precio_base + iva
 
     # Si tiene mutua, aplicar descuento del 100%
     descuento_mutua = 0
@@ -464,14 +436,14 @@ def generar_factura(request, cita_id):
                 'email': cita.usuario.email
             },
             'service': {
-                'type': cita.servicio,
+                'type': servicio_obj.name,
                 'specialist': "Dr. Asignado",  # En producción sería el médico real
                 'date': cita.fecha.strftime('%d/%m/%Y'),
                 'time': cita.hora.strftime('%H:%M')
             },
             'items': [
                 {
-                    'description': cita.servicio,
+                    'description': servicio_obj.name,
                     'basePrice': f"{precio_base:.2f}".replace('.', ','),
                     'tax': f"{iva:.2f}".replace('.', ','),
                     'quantity': 1,

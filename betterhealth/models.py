@@ -37,7 +37,7 @@ class Cita(models.Model):
     fecha = models.DateField()
     hora = models.TimeField()
     importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'),('confirmado', 'Confirmado'), ('pendiente', 'Pendiente')], default='pendiente')
+    estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'),('confirmado', 'Confirmado'),('pendiente', 'Pendiente'),('cancelada', 'Cancelada')],default='pendiente')
 
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio.name} el {self.fecha} a las {self.hora}'
