@@ -116,7 +116,7 @@ def register_staff(request):
         if form.is_valid():
             form.save()  # Esto ya crea el User y el StaffProfile dentro del form
             messages.success(request, "Nuevo miembro del personal registrado.")
-            if(form.cleaned_data['role'] == 'admin'):
+            if form.cleaned_data['role'] == 'admin':
                 return redirect('panel_administrativo')
             else:
                 return redirect('panel_finanzas')
@@ -162,6 +162,8 @@ def login_view(request):
                 staff = StaffProfile.objects.get(user=user)
                 if staff.role == 'admin':
                     return redirect('panel_administrativo')
+                elif staff.role == 'finanzas':
+                    return redirect('panel_finanzas')
                 else:
                     return redirect('profile')
             except StaffProfile.DoesNotExist:
