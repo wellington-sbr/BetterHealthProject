@@ -252,6 +252,7 @@
                 <option value="">Todos</option>
                 <option value="pagado" {% if request.GET.estado == 'pagado' %}selected{% endif %}>Pagado</option>
                 <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="cancelada" {% if request.GET.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
             </select>
         </div>
 
@@ -278,34 +279,12 @@
             <tr>
                 <td>{{ cita.id }}</td>
                 <td>{{ cita.usuario.username }}</td>
-                <td>{{ cita.servicio }}</td>
+                <td>{{ cita.servicio.name }}</td>
                 <td>{{ cita.fecha }}</td>
+                <td>{{ cita.servicio.price|floatformat:2 }} €</td>
                 <td>
-                    {% if cita.servicio == "Consulta médica general" %}
-                        72,60 €
-                    {% elif "Cardiología" in cita.servicio %}
-                        145,20 €
-                    {% elif "Dermatología" in cita.servicio %}
-                        121,00 €
-                    {% elif "Neurología" in cita.servicio %}
-                        157,30 €
-                    {% elif "Análisis de sangre" in cita.servicio %}
-                        90,75 €
-                    {% elif "Electrocardiograma" in cita.servicio %}
-                        96,80 €
-                    {% elif "Resonancia Magnética" in cita.servicio %}
-                        302,50 €
-                    {% elif "Radiografía" in cita.servicio %}
-                        72,60 €
-                    {% elif "Colonoscopia" in cita.servicio %}
-                        242,00 €
-                    {% else %}
-                        121,00 €
-                    {% endif %}
-                </td>
-                <td>
-                    <span class="badge {% if forloop.counter|divisibleby:3 %}badge-success{% else %}badge-warning{% endif %}">
-                        {% if forloop.counter|divisibleby:3 %}PAGADO{% else %}PENDIENTE{% endif %}
+                    <span class="badge {% if cita.estado == 'pagado' %}badge-success{% elif cita.estado == 'pendiente' %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ cita.estado|upper }}
                     </span>
                 </td>
                 <td class="action-buttons">
@@ -321,11 +300,19 @@
     </table>
 
     <div class="pagination">
-        <a href="#">&laquo;</a>
-        <a href="#" class="active">1</a>
-        <a href="#">2</a>
-        <a href="#">3</a>
-        <a href="#">&raquo;</a>
+        {% if citas.has_previous %}
+            <a href="?page=1">&laquo; Primera</a>
+            <a href="?page={{ citas.previous_page_number }}">Anterior</a>
+        {% endif %}
+
+        {% for num in citas.paginator.page_range %}
+            <a href="?page={{ num }}" class="{% if num == citas.number %}active{% endif %}">{{ num }}</a>
+        {% endfor %}
+
+        {% if citas.has_next %}
+            <a href="?page={{ citas.next_page_number }}">Siguiente</a>
+            <a href="?page={{ citas.paginator.num_pages }}">Última &raquo;</a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -336,10 +323,9 @@
     // Configuración del gráfico de servicios
     const serviciosCtx = document.getElementById('serviciosChart').getContext('2d');
 
-    // Datos para el gráfico de servicios
     const serviciosLabels = [
         {% for servicio in estadisticas.citas_por_servicio %}
-            "{{ servicio.servicio }}",
+            "{{ servicio.servicio__name }}",
         {% endfor %}
     ];
 

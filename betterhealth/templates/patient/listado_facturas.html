@@ -200,38 +200,39 @@
                 <label for="servicio">Servicio</label>
                 <select id="servicio" name="servicio">
                     <option value="">Todos los servicios</option>
-                    {% for choice in cita_choices %}
-                    <option value="{{ choice.0 }}" {% if request.GET.servicio == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                    {% for servicio in servicios %}
+                    <option value="{{ servicio.name }}" {% if request.GET.servicio == servicio.name %}selected{% endif %}>{{ servicio.name }}</option>
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="form-group">
                 <label for="fecha">Fecha</label>
                 <input type="date" id="fecha" name="fecha" value="{{ request.GET.fecha }}">
             </div>
-            
+
             <div class="form-group">
                 <label for="estado">Estado</label>
                 <select id="estado" name="estado">
                     <option value="">Todos</option>
                     <option value="pagado" {% if request.GET.estado == 'pagado' %}selected{% endif %}>Pagado</option>
                     <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="cancelada" {% if request.GET.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
                 </select>
             </div>
-            
+
             <button type="submit">Filtrar</button>
         </form>
     </div>
-    
+
     {% if citas %}
     <div class="facturas-list">
         {% for cita in citas %}
         <div class="factura-card">
             <div class="factura-header">
-                <h3>{{ cita.servicio }}</h3>
-                <span class="factura-badge {% if forloop.counter|divisibleby:3 %}factura-badge-paid{% else %}factura-badge-pending{% endif %}">
-                    {% if forloop.counter|divisibleby:3 %}PAGADO{% else %}PENDIENTE{% endif %}
+                <h3>{{ cita.servicio.name }}</h3>
+                <span class="factura-badge {% if cita.estado == 'pagado' %}factura-badge-paid{% elif cita.estado == 'pendiente' %}factura-badge-pending{% else %}factura-badge-cancelled{% endif %}">
+                    {{ cita.estado|upper }}
                 </span>
             </div>
             <div class="factura-body">
@@ -249,38 +250,18 @@
                         <div class="factura-info-value">INV-{{ cita.fecha|date:"Y" }}-{{ cita.id }}</div>
                     </div>
                 </div>
-                
+
                 <div class="factura-price">
-                    {% if cita.servicio == "Consulta médica general" %}
-                        72,60 €
-                    {% elif "Cardiología" in cita.servicio %}
-                        145,20 €
-                    {% elif "Dermatología" in cita.servicio %}
-                        121,00 €
-                    {% elif "Neurología" in cita.servicio %}
-                        157,30 €
-                    {% elif "Análisis de sangre" in cita.servicio %}
-                        90,75 €
-                    {% elif "Electrocardiograma" in cita.servicio %}
-                        96,80 €
-                    {% elif "Resonancia Magnética" in cita.servicio %}
-                        302,50 €
-                    {% elif "Radiografía" in cita.servicio %}
-                        72,60 €
-                    {% elif "Colonoscopia" in cita.servicio %}
-                        242,00 €
-                    {% else %}
-                        121,00 €
-                    {% endif %}
-                    
-                    {% if forloop.counter|divisibleby:4 %}
+                    {{ cita.servicio.price|floatformat:2 }} €
+
+                    {% if cita.servicio.included_in_mutual %}
                     <span style="font-size: 14px; color: #4CAF50; display: block; margin-top: 5px;">Cubierto por Mutua</span>
                     {% endif %}
                 </div>
-                
+
                 <div class="factura-actions">
                     <a href="{% url 'generar_factura' cita_id=cita.id %}" class="btn btn-primary">Ver Factura</a>
-                    <div>
+                </div>
             </div>
         </div>
         {% endfor %}
