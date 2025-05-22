@@ -5,7 +5,6 @@ from typing import Optional, List, Dict, Any, Union
 from django.conf import settings
 from django.core.cache import cache
 
-
 class MutuaApiClient:
     """
     Cliente para la API de la Mutua
