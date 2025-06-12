@@ -1,0 +1,64 @@
+{% extends 'patient/base.html' %}
+
+{% block title %}Registro - BetterHealth{% endblock %}
+
+{% block bodyclass %}auth-page{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Crear una cuenta</h1>
+    <form method="post" class="form">
+        {% csrf_token %}
+        
+        {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% for error in field.errors %}
+            <div class="error-message">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        
+        <!-- Checkbox para mutua -->
+        <div class="form-group">
+            <label for="tiene_mutua">
+                <input type="checkbox" id="tiene_mutua" name="tiene_mutua"> ¿Tienes mutua?
+            </label>
+        </div>
+        
+        <!-- Campo para el número de póliza (inicialmente oculto) -->
+        <div class="form-group" id="div_numero_poliza" style="display: none;">
+            <label for="numero_poliza">Número de póliza:</label>
+            <input type="text" id="numero_poliza" name="numero_poliza" class="form-control">
+        </div>
+        
+        <button type="submit" class="button primary">Registrarse</button>
+    </form>
+    <p class="link-text">¿Ya tienes una cuenta? <a href="{% url 'login' %}">Iniciar sesión</a></p>
+</div>
+
+<!-- Script para mostrar/ocultar el campo de número de póliza -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tieneMutuaCheckbox = document.getElementById('tiene_mutua');
+        const divNumeroPoliza = document.getElementById('div_numero_poliza');
+        
+        // Función para mostrar/ocultar el campo de número de póliza
+        function toggleNumeroPoliza() {
+            if (tieneMutuaCheckbox.checked) {
+                divNumeroPoliza.style.display = 'block';
+            } else {
+                divNumeroPoliza.style.display = 'none';
+                document.getElementById('numero_poliza').value = '';
+            }
+        }
+        
+        // Detectar cambios en el checkbox
+        tieneMutuaCheckbox.addEventListener('change', toggleNumeroPoliza);
+        
+        // Estado inicial
+        toggleNumeroPoliza();
+    });
+</script>
+{% endblock %}

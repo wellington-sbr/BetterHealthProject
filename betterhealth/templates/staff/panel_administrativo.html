@@ -1,0 +1,95 @@
+{% extends 'staff/base_admin.html' %}
+
+{% block title %}Panel Administrativo - Better Health{% endblock %}
+
+{% block content %}
+<h2 style="font-size: 28px; font-weight: 600; color: #005F99; margin-bottom: 16px;">Panel Administrativo</h2>
+
+<div class="filters">
+    <h3>Filtros de Citas</h3>
+    <form class="filter-form" method="get">
+        <div class="form-group">
+            <label for="servicio">Servicio</label>
+            <select id="servicio" name="servicio">
+                <option value="">Todos los servicios</option>
+                {% for servicio in servicios %}
+                <option value="{{ servicio.name }}" {% if request.GET.servicio == servicio.name %}selected{% endif %}>{{ servicio.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="fecha_inicio">Fecha inicio</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ request.GET.fecha_inicio }}">
+        </div>
+
+        <div class="form-group">
+            <label for="fecha_fin">Fecha fin</label>
+            <input type="date" id="fecha_fin" name="fecha_fin" value="{{ request.GET.fecha_fin }}">
+        </div>
+
+        <div class="form-group">
+            <label for="estado">Estado</label>
+            <select id="estado" name="estado">
+                <option value="">Todos</option>
+                <option value="confirmado" {% if request.GET.estado == 'confirmado' %}selected{% endif %}>Confirmado</option>
+                <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="cancelada" {% if request.GET.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+            </select>
+        </div>
+
+        <button type="submit">Filtrar</button>
+    </form>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+    <thead style="background-color: #F5F5F5;">
+        <tr>
+            <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Paciente</th>
+            <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Servicio</th>
+            <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Fecha</th>
+            <th style="text-align: left; padding: 12px; font-weight: bold; color: #333;">Estado</th>
+            <th style="text-align: left; padding: 12px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cita in citas %}
+        <tr style="background-color: {% cycle '#FFFFFF' '#F5F5F5' %};">
+            <td style="padding: 12px;">{{ cita.usuario.username }}</td>
+            <td style="padding: 12px;">{{ cita.servicio.name }}</td>
+            <td style="padding: 12px;">{{ cita.fecha }}</td>
+            <td style="padding: 12px;">
+                <span class="badge {% if cita.estado == 'confirmado' %}badge-success{% elif cita.estado == 'pendiente' %}badge-warning{% else %}badge-danger{% endif %}">
+                    {{ cita.estado|upper }}
+                </span>
+            </td>
+            <td style="padding: 12px;">
+                <a href="{% url 'detalle_cita_admin' cita.id %}" class="btn btn-primary">Ver</a>
+                <a href="{% url 'confirmar_cita' cita.id %}" class="btn btn-success">Confirmar</a>
+                <a href="{% url 'cancelar_cita' cita.id %}" class="btn btn-danger">Cancelar</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" style="padding: 12px;">No hay citas programadas.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {% if citas.has_previous %}
+        <a href="?page=1">&laquo; Primera</a>
+        <a href="?page={{ citas.previous_page_number }}">Anterior</a>
+    {% endif %}
+
+    {% for num in citas.paginator.page_range %}
+        <a href="?page={{ num }}" class="{% if num == citas.number %}active{% endif %}">{{ num }}</a>
+    {% endfor %}
+
+    {% if citas.has_next %}
+        <a href="?page={{ citas.next_page_number }}">Siguiente</a>
+        <a href="?page={{ citas.paginator.num_pages }}">Última &raquo;</a>
+    {% endif %}
+</div>
+{% endblock %}
