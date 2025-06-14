@@ -17,6 +17,7 @@ urlpatterns = [
     path('accounts/login/', views.login_view, name='login'),
     path('admin-calendar/', views.admin_calendar, name='calendar_admin'),
     path('citas-json/', views.citas_json, name='citas_json'),
+    path('all_services/', views.all_services, name='all_services'),
     path('register-staff/', views.register_staff, name='register_staff'),
     path('admin-panel/', views.admin_panel, name='panel_administrativo'),
 

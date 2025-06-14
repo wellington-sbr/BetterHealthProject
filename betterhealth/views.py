@@ -627,3 +627,35 @@ def services_catalog(request):
         "services_mutual": services_mutual,
         "services_clinic_only": services_clinic_only
     })
+
+
+def all_services(request):
+    # Vista completa del catálogo de servicios
+    search_query = request.GET.get('servicio', '')
+    service_type = request.GET.get('tipo_servicio', '')
+
+    servicios_mutual = Service.objects.filter(included_in_mutual=True)
+    servicios_clinic = Service.objects.filter(included_in_mutual=False)
+
+    if search_query:
+        servicios_mutual = servicios_mutual.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(service_type__icontains=search_query))
+
+        servicios_clinic = servicios_clinic.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(service_type__icontains=search_query))
+
+    if service_type == 'mutual':
+        servicios_clinic = Service.objects.none()
+    elif service_type == 'private':
+        servicios_mutual = Service.objects.none()
+
+    return render(request, "patient/all_services.html", {
+        "services_mutual": servicios_mutual,
+        "services_clinic": servicios_clinic,
+        "search_query": search_query,
+        "selected_type": service_type,
+    })
