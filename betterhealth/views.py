@@ -618,3 +618,12 @@ def export_services_csv(request):
         ])
 
     return response
+
+def services_catalog(request):
+    services_mutual = Service.objects.filter(included_in_mutual=True)
+    services_clinic_only = Service.objects.filter(included_in_mutual=False)
+
+    return render(request, "patient/programar_cita.html", {
+        "services_mutual": services_mutual,
+        "services_clinic_only": services_clinic_only
+    })
