@@ -24,6 +24,11 @@
             <h2>Mi Perfil</h2>
             <p>Revisa y edita tu información personal.</p>
         </a>
+
+        <a href="{% url 'all_services' %}" class="option-card">
+            <h2>Servicios Clínica</h2>
+            <p>Conoce todos los servicios disponibles de la clínica.</p>
+        </a>
     </div>
 </main>
 
@@ -57,6 +62,9 @@
     text-decoration: none;
     color: var(--gray-dark);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center
 }
 
 .option-card:hover {
@@ -73,6 +81,8 @@
 .option-card p {
     font-size: 14px;
     color: var(--gray-dark);
+    text-align: center;
+    margin: 0;
 }
 </style>
 {% endblock %}
