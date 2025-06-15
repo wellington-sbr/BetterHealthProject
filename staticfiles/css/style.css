@@ -563,19 +563,4 @@ table td:last-child {
     margin-top: 24px;
 }
 
-.detail-card {
-    background-color: var(--white);
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 24px;
-}
 
-.select2-results__option.hora-ocupada {
-   background-color: #add8e6 !important; /* Azul claro */
-   color: #000000; /* Texto negro para contraste */
-}
-
-.select2-selection__rendered.hora-ocupada {
- background-color: #add8e6 !important;
-}

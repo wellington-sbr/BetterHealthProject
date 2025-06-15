@@ -85,31 +85,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-<script>
-$(document).ready(function() {
-    const $selectHora = $('select[name="hora"]');
-
-    templateResult: function (data) {
-            if (!data.id) return data.text;
-
-            const isOcupada = $(data.element).hasClass('hora-ocupada');
-            const color = isOcupada ? '#add8e6' : '#ffffff';
-
-            const $result = $('<span></span>').text(data.text);
-            $result.css('background-color', color);
-            return $result;
-        },
-        templateSelection: function (data) {
-            const isOcupada = $(data.element).hasClass('hora-ocupada');
-            const color = isOcupada ? '#add8e6' : '#ffffff';
-
-            const $selection = $('<span></span>').text(data.text);
-            $selection.css('background-color', color);
-            return $selection;
-        }
-    });
-});
-</script>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
