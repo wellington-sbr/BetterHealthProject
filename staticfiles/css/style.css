@@ -6,6 +6,8 @@
     --error: #D32F2F;
     --white: #ffffff;
     --light-blue: #EBF5FF;
+    --primary-dark: #2980b9;
+    --primary-rgb: 52, 152, 219;
 }
 body {
   margin: 0;
