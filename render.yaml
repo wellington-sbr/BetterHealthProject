@@ -9,7 +9,7 @@ services:
     plan: free
     name: mysite
     runtime: python
-    buildCommand: "./build.sh"
+    buildCommand: "bash BetterHealthProject/build.sh"
     startCommand: "python -m gunicorn BetterHealthProject.asgi:application -k uvicorn.workers.UvicornWorker"
     envVars:
       - key: DATABASE_URL
