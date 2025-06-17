@@ -28,4 +28,6 @@ jobs:
         run: python -m playwright install --with-deps
 
       - name: Run Playwright tests
-        run: pytest betterhealth/tests/
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          pytest betterhealth/tests/
