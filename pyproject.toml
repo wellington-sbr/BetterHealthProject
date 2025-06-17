@@ -1,32 +1,31 @@
-[project]
+[tool.poetry]
 name = "betterhealthproject"
 version = "0.2.0"
 description = ""
 authors = [
-    {name = "Wellington Báez",email = "wbr1@alumnes.udl.cat"},
-    {name = "Malena Díaz",email = "cdc12@alumnes.udl.cat"},
-    {name = "Kris Ocaña",email = "koz1@alumnes.udl.cat"},
-    {name = "Ainhoa Perez",email = "apg58@alumnes.udl.cat"}
+    "Wellington Báez <wbr1@alumnes.udl.cat>",
+    "Malena Díaz <cdc12@alumnes.udl.cat>",
+    "Kris Ocaña <koz1@alumnes.udl.cat>",
+    "Ainhoa Perez <apg58@alumnes.udl.cat>"
 ]
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
-dependencies = [
-    "django (>=5.2.3,<6.0.0)",
-    "prettytable (>=3.15.1,<4.0.0)",
-    "requests (>=2.32.3,<3.0.0)",
-    "pillow (>=11.2.1,<12.0.0)",
-    "opencv-python (>=4.11.0.86,<5.0.0.0)",
-    "dj-database-url (>=2.3.0,<3.0.0)",
-    "dotenv (>=0.9.9,<0.10.0)",
-    "whitenoise (>=6.9.0,<7.0.0)",
-    "django-environ (>=0.12.0,<0.13.0)",
-    "djangorestframework (>=3.16.0,<4.0.0)",
-    "gunicorn (>=23.0.0,<24.0.0)",
-    "uvicorn (>=0.34.2,<1.0.0)",
-    "pytest (>=8.4.0,<9.0.0)",
-    "playwright (>=1.52.0,<2.0.0)"
-]
 
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+django = ">=5.2.3,<6.0.0"
+prettytable = ">=3.15.1,<4.0.0"
+requests = ">=2.32.3,<3.0.0"
+pillow = ">=11.2.1,<12.0.0"
+opencv-python = ">=4.11.0.86,<5.0.0.0"
+dj-database-url = ">=2.3.0,<3.0.0"
+dotenv = ">=0.9.9,<0.10.0"
+whitenoise = ">=6.9.0,<7.0.0"
+django-environ = ">=0.12.0,<0.13.0"
+djangorestframework = ">=3.16.0,<4.0.0"
+gunicorn = ">=23.0.0,<24.0.0"
+uvicorn = ">=0.34.2,<1.0.0"
+pytest = ">=8.4.0,<9.0.0"
+playwright = ">=1.52.0,<2.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
