@@ -636,6 +636,7 @@ def client_invoice_view(request, cita_id):
 
     mutua = None
     mutua_covers_service = False
+    mutua_authorized = False
 
     # Check if patient has mutua and service is included in mutua
     if profile.tiene_mutua and profile.numero_poliza and service.included_in_mutual:
@@ -649,16 +650,31 @@ def client_invoice_view(request, cita_id):
                 "coverage": mutua_data.get("cobertura", "Completa"),
             }
             mutua_covers_service = True
+
+            # If the service requires authorization, check it
+            if service.requires_mutual_authorization:
+                auth_resp = api_client.consultar_historial_autorizaciones(profile.id)
+                # You may need to adapt this logic to your API's response structure
+                if auth_resp.get('success') and auth_resp.get('data'):
+                    # Check if the service is authorized (example logic)
+                    for auth in auth_resp['data']:
+                        if str(auth.get('servicio_id')) == str(service.id) and auth.get('autorizado'):
+                            mutua_authorized = True
+                            break
+                else:
+                    mutua_authorized = False
+            else:
+                mutua_authorized = True  # No authorization needed
         else:
-            # Mutua API failed, but patient claims mutua
             mutua = {
                 "name": "Mutua Universal",
                 "affiliateNumber": profile.numero_poliza,
-                "coverage": "Completa",
+                "coverage": "Desconocida",
             }
-            mutua_covers_service = True
+            mutua_covers_service = False
+            mutua_authorized = False
 
-    # Company info (could be from settings or DB)
+    # Company info (hardcoded as per your request)
     company_info = {
         "address": "Calle Principal, 123",
         "city": "Madrid",
@@ -672,7 +688,6 @@ def client_invoice_view(request, cita_id):
     # Service info
     service_info = {
         "type": service.service_type,
-        "specialist": getattr(cita, "especialista", None) and cita.especialista.get_full_name() or "",
         "date": cita.fecha.strftime("%d/%m/%Y"),
         "time": cita.hora.strftime("%H:%M"),
     }
@@ -690,14 +705,14 @@ def client_invoice_view(request, cita_id):
     tax = subtotal * 0.21
     total = subtotal + tax
 
-    # If mutua covers the service, discount the total
-    mutual_discount = total if mutua_covers_service else 0.0
-    total_to_pay = 0.0 if mutua_covers_service else total
+    # Mutua discount logic
+    mutual_discount = total if (mutua_covers_service and mutua_authorized) else 0.0
+    total_to_pay = 0.0 if (mutua_covers_service and mutua_authorized) else total
 
     invoice_data = {
         "number": f"INV-{timezone.now().year}-{cita.id:05d}",
         "date": timezone.now().strftime("%d/%m/%Y"),
-        "status": "PAGADO" if mutua_covers_service else "PENDIENTE",
+        "status": "PAGADO" if mutual_discount else "PENDIENTE",
         "client": {
             "name": profile.name,
             "dni": profile.dni,
@@ -707,7 +722,7 @@ def client_invoice_view(request, cita_id):
             "email": profile.email,
         },
         "service": service_info,
-        "mutua": mutua,
+        "mutua": mutua if (mutua_covers_service and mutua_authorized) else None,
         "items": items,
         "totals": {
             "subtotal": f"{subtotal:.2f}",
@@ -715,7 +730,11 @@ def client_invoice_view(request, cita_id):
             "mutualDiscount": f"{mutual_discount:.2f}",
             "total": f"{total_to_pay:.2f}"
         },
-        "notes": "Servicio cubierto por Mutua. Factura emitida a efectos informativos." if mutua_covers_service else "",
+        "notes": (
+            "Servicio cubierto por Mutua. Factura emitida a efectos informativos."
+            if (mutua_covers_service and mutua_authorized)
+            else "Servicio prestado en las instalaciones de BetterHealth."
+        ),
         "company": company_info
     }
 
