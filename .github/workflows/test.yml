@@ -30,6 +30,10 @@ jobs:
       - name: Run Playwright tests
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          MUTUA_API_BASE_URL: ${{ secrets.MUTUA_API_BASE_URL }}
+          MUTUA_API_USERNAME: ${{ secrets.MUTUA_API_USERNAME }}
+          MUTUA_API_PASSWORD: ${{ secrets.MUTUA_API_PASSWORD }}
+          DEBUG: "True"
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           export DJANGO_SETTINGS_MODULE=BetterHealthProject.settings
