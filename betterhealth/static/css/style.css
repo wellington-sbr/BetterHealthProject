@@ -6,6 +6,8 @@
     --error: #D32F2F;
     --white: #ffffff;
     --light-blue: #EBF5FF;
+    --primary-dark: #2980b9;
+    --primary-rgb: 52, 152, 219;
 }
 
 body {
@@ -634,4 +636,13 @@ table td:last-child {
     padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 24px;
+}
+
+.select2-results__option.hora-ocupada {
+   background-color: #add8e6 !important; /* Azul claro */
+   color: #000000; /* Texto negro para contraste */
+}
+
+.select2-selection__rendered.hora-ocupada {
+ background-color: #add8e6 !important;
 }

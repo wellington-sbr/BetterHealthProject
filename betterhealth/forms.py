@@ -67,7 +67,17 @@ class CitaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        horas_ocupadas = kwargs.pop('horas_ocupadas', [])
         super(CitaForm, self).__init__(*args, **kwargs)
+        services_included= Service.objects.filter(included_in_mutual=True)
+        services_nonincluded = Service.objects.filter(included_in_mutual=False)
+        self.horas_ocupadas = horas_ocupadas
+
+        grouped_choices = [
+            ("Servicios cubiertos por Mutua", [(s.id, s.name) for s in services_included]),
+            ("Servicios exclusivos de la Clínica", [(s.id, s.name) for s in services_nonincluded]),
+        ]
+        self.fields['servicio'].choices = grouped_choices
 
         HORAS_VALIDAS = [
             (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
