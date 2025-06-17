@@ -1,0 +1,33 @@
+{% extends 'patient/base.html' %}
+
+{% block title %}Ajustes - BetterHealth{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Ajustes</h1>
+    
+    <div class="content-box">
+        <p class="info-text">Configura tus preferencias y datos personales.</p>
+        
+        <div class="settings-sections">
+            <div class="settings-card">
+                <h2>Preferencias de visualización</h2>
+                <p>Mosdifica el tamaño de las letras</p>
+                <a href="#" class="button secondary">Configurar preferencias</a>
+            </div>
+            
+            <div class="settings-card">
+                <h2>Preferencias de notificaciones</h2>
+                <p>Configura si prefieres que nos comuniquemos contigo.</p>
+                <a href="#" class="button secondary">Configurar preferencias</a>
+            </div>
+            
+            <div class="settings-card">
+                <h2>Seguridad de la Cuenta</h2>
+                <p>Cambia tu contraseña y ajusta la configuración de seguridad.</p>
+                <a href="#" class="button secondary">Gestionar seguridad</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

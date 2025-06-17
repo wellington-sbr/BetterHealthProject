@@ -1,0 +1,12 @@
+{% extends 'patient/base.html' %}
+
+{% block title %}Cita Guardada{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="alert alert-success mt-4">
+            Tu cita para el servicio <strong>{{ cita.servicio }}</strong> el día <strong>{{ cita.fecha }}</strong> a las <strong>{{ cita.hora }}</strong> se guardó correctamente.
+        </div>
+        <a href="{% url 'programar_cita' %}" class="btn btn-secondary mt-3">Volver a programar una nueva cita</a>
+    </div>
+{% endblock %}

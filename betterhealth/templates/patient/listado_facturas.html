@@ -1,0 +1,277 @@
+{% extends "patient/base.html" %}
+{% load static %}
+
+{% block title %}Mis Facturas - BetterHealth{% endblock %}
+
+{% block extra_css %}
+<style>
+    .facturas-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .page-title {
+        color: #005F99;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filters {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+    
+    .filter-form .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-form label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .filter-form input, .filter-form select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+    
+    .filter-form button {
+        background-color: #005F99;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .facturas-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+    
+    .factura-card {
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .factura-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .factura-header {
+        background-color: #005F99;
+        color: white;
+        padding: 15px;
+    }
+    
+    .factura-header h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+    
+    .factura-body {
+        padding: 20px;
+    }
+    
+    .factura-info {
+        margin-bottom: 20px;
+    }
+    
+    .factura-info-item {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    
+    .factura-info-label {
+        font-weight: 600;
+        width: 40%;
+    }
+    
+    .factura-info-value {
+        width: 60%;
+    }
+    
+    .factura-actions {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .factura-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 5px;
+    }
+    
+    .factura-badge-paid {
+        background-color: #4CAF50;
+        color: white;
+    }
+    
+    .factura-badge-pending {
+        background-color: #FFC107;
+        color: #333;
+    }
+    
+    .factura-price {
+        font-size: 24px;
+        font-weight: 700;
+        color: #005F99;
+        margin: 15px 0;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        font-size: 14px;
+    }
+    
+    .btn-primary {
+        background-color: #005F99;
+        color: white;
+        border: none;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .empty-state h3 {
+        color: #005F99;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .facturas-list {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="facturas-container">
+    <h1 class="page-title">Mis Facturas</h1>
+    
+    <div class="filters">
+        <form class="filter-form" method="get">
+            <div class="form-group">
+                <label for="servicio">Servicio</label>
+                <select id="servicio" name="servicio">
+                    <option value="">Todos los servicios</option>
+                    {% for servicio in servicios %}
+                    <option value="{{ servicio.name }}" {% if request.GET.servicio == servicio.name %}selected{% endif %}>{{ servicio.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha" name="fecha" value="{{ request.GET.fecha }}">
+            </div>
+
+            <div class="form-group">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option value="pagado" {% if request.GET.estado == 'pagado' %}selected{% endif %}>Pagado</option>
+                    <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="cancelada" {% if request.GET.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+            </div>
+
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    {% if citas %}
+    <div class="facturas-list">
+        {% for cita in citas %}
+        <div class="factura-card">
+            <div class="factura-header">
+                <h3>{{ cita.servicio.name }}</h3>
+                <span class="factura-badge {% if cita.estado == 'pagado' %}factura-badge-paid{% elif cita.estado == 'pendiente' %}factura-badge-pending{% else %}factura-badge-cancelled{% endif %}">
+                    {{ cita.estado|upper }}
+                </span>
+            </div>
+            <div class="factura-body">
+                <div class="factura-info">
+                    <div class="factura-info-item">
+                        <div class="factura-info-label">Fecha:</div>
+                        <div class="factura-info-value">{{ cita.fecha }}</div>
+                    </div>
+                    <div class="factura-info-item">
+                        <div class="factura-info-label">Hora:</div>
+                        <div class="factura-info-value">{{ cita.hora }}</div>
+                    </div>
+                    <div class="factura-info-item">
+                        <div class="factura-info-label">Factura Nº:</div>
+                        <div class="factura-info-value">INV-{{ cita.fecha|date:"Y" }}-{{ cita.id }}</div>
+                    </div>
+                </div>
+
+                <div class="factura-price">
+                    {{ cita.servicio.price|floatformat:2 }} €
+
+                    {% if cita.servicio.included_in_mutual %}
+                    <span style="font-size: 14px; color: #4CAF50; display: block; margin-top: 5px;">Cubierto por Mutua</span>
+                    {% endif %}
+                </div>
+
+                <div class="factura-actions">
+                    <a href="{% url 'generar_factura' cita_id=cita.id %}" class="btn btn-primary">Ver Factura</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No tienes facturas</h3>
+        <p>No se encontraron facturas que coincidan con tus criterios de búsqueda.</p>
+        <a href="{% url 'programar_cita' %}" class="btn btn-primary">Programar una cita</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
