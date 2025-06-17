@@ -1,10 +1,9 @@
 import uuid
 import csv
 import io
-from datetime import timezone, datetime
+from datetime import timezone, datetime, timedelta, time
 from decimal import Decimal
 from django.db.models import Count, Sum
-from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -18,6 +17,9 @@ from .forms import PatientProfileForm, CustomUserCreationForm, CitaForm, StaffCr
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.utils.dateparse import parse_date
 from .models import PatientProfile, Cita, Service, StaffProfile, Invoice
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
 
 @login_required
 def admin_panel(request):
@@ -215,6 +217,127 @@ def contact_view(request):
     return render(request, 'patient/contact.html')
 
 
+
+def get_precise_available_slots(servicio_id, fecha):
+    """
+    Devuelve una lista de horarios disponibles (como '%H:%M') en los que se puede agendar
+    un servicio con duración arbitraria, sin romper bloques ni desperdiciar tiempo.
+    """
+    servicio = get_object_or_404(Service, id=servicio_id)
+    duracion = timedelta(minutes=servicio.duration_minutes)
+
+    # Horarios de la clínica: 9:00-12:30 y 15:00-19:30
+    horarios_clinica = []
+
+    # Mañana: 9:00 - 12:30
+    inicio_manana = datetime.combine(fecha, time(9, 0))
+    fin_manana = datetime.combine(fecha, time(12, 30))
+    horarios_clinica.append((inicio_manana, fin_manana))
+
+    # Tarde: 15:00 - 19:30
+    inicio_tarde = datetime.combine(fecha, time(15, 0))
+    fin_tarde = datetime.combine(fecha, time(19, 30))
+    horarios_clinica.append((inicio_tarde, fin_tarde))
+
+    # Obtener todas las citas del día (no solo del mismo servicio)
+    citas = Cita.objects.filter(
+        fecha=fecha,
+        estado__in=['pendiente', 'confirmado']
+    ).select_related('servicio').order_by('hora')
+
+    # Convertir citas en bloques ocupados
+    bloques_ocupados = []
+    for cita in citas:
+        inicio = datetime.combine(fecha, cita.hora)
+        fin = inicio + timedelta(minutes=cita.servicio.duration_minutes)
+        bloques_ocupados.append((inicio, fin))
+
+    disponibles = []
+
+    # Revisar cada período de horario de la clínica
+    for inicio_periodo, fin_periodo in horarios_clinica:
+        # Filtrar bloques ocupados que están en este período
+        bloques_en_periodo = [
+            (max(inicio, inicio_periodo), min(fin, fin_periodo))
+            for inicio, fin in bloques_ocupados
+            if inicio < fin_periodo and fin > inicio_periodo
+        ]
+
+        # Ordenar bloques por hora de inicio
+        bloques_en_periodo.sort()
+
+        # Agregar un bloque al final para simplificar el algoritmo
+        bloques_en_periodo.append((fin_periodo, fin_periodo))
+
+        # Buscar huecos libres
+        actual = inicio_periodo
+
+        for inicio_ocupado, fin_ocupado in bloques_en_periodo:
+            # Buscar slots disponibles entre actual y inicio_ocupado
+            while actual + duracion <= inicio_ocupado:
+                disponibles.append(actual.strftime('%H:%M'))
+                actual += timedelta(minutes=30)  # Avanzar en bloques de 30 min
+
+            # Mover actual al final del bloque ocupado
+            actual = max(actual, fin_ocupado)
+
+    return disponibles
+
+
+def get_all_possible_slots():
+    """
+    Devuelve todos los slots posibles de la clínica en formato HH:MM
+    """
+    slots = []
+
+    # Mañana: 9:00 - 12:30
+    for h in range(9, 13):
+        for m in [0, 30]:
+            if h == 12 and m > 30:
+                break
+            slots.append(f"{h:02d}:{m:02d}")
+
+    # Tarde: 15:00 - 19:30
+    for h in range(15, 20):
+        for m in [0, 30]:
+            if h == 19 and m > 30:
+                break
+            slots.append(f"{h:02d}:{m:02d}")
+
+    return slots
+
+
+@require_GET
+def get_horarios_disponibles(request):
+    """
+    Vista AJAX que devuelve los horarios disponibles para un servicio y fecha específicos
+    """
+    servicio_id = request.GET.get('servicio')
+    fecha_str = request.GET.get('fecha')
+
+    if not servicio_id or not fecha_str:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+    try:
+        servicio = Service.objects.get(id=servicio_id)
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    except (Service.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'Parámetros inválidos'}, status=400)
+
+    # Obtener horarios disponibles usando tu función existente
+    horarios_disponibles = get_precise_available_slots(servicio_id, fecha)
+
+    # Obtener todos los slots posibles
+    todos_los_slots = get_all_possible_slots()
+
+    # Los ocupados son todos los que no están disponibles
+    horarios_ocupados = [slot for slot in todos_los_slots if slot not in horarios_disponibles]
+
+    return JsonResponse({
+        'horarios': horarios_disponibles,
+        'ocupados': horarios_ocupados
+    })
+
 @login_required
 def programar_cita(request):
     """
@@ -224,20 +347,22 @@ def programar_cita(request):
         form = CitaForm(request.POST)
         if form.is_valid():
             cita = form.save(commit=False)
-            patient_profile, created = PatientProfile.objects.get_or_create(
-                user=request.user,
-                defaults={'name': request.user.username}
-            )
-            cita.paciente = patient_profile
-            # Validar que el servicio tiene horarios disponibles
-            horarios_disponibles = get_available_slots(cita.servicio.id, cita.fecha)
-            if cita.hora.strftime('%H:%M') not in horarios_disponibles:
-                messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
-                return redirect('programar_cita')
+            cita.usuario = request.user
 
             # Validar que la fecha no es fin de semana
             if cita.fecha.weekday() in [5, 6]:  # 5 = Sábado, 6 = Domingo
                 messages.error(request, "Por favor, seleccione un día entre semana (lunes a viernes) para su cita.")
+                return redirect('programar_cita')
+
+            # Convertir hora string a time object
+            hora_str = form.cleaned_data['hora']
+            cita.hora = datetime.strptime(hora_str, '%H:%M').time()
+
+            # Calcular horarios válidos en base al servicio y la fecha
+            horas_disponibles = get_precise_available_slots(cita.servicio.id, cita.fecha)
+
+            if hora_str not in horas_disponibles:
+                messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
                 return redirect('programar_cita')
 
             cita.save()
@@ -247,26 +372,6 @@ def programar_cita(request):
 
     return render(request, 'patient/programar_cita.html', {'form': form})
 
-def get_available_slots(servicio_id, fecha):
-    """
-    Devuelve una lista de horarios disponibles para un servicio en una fecha específica.
-    Excluye horarios ya reservados y permite reusar citas canceladas.
-    """
-    # Obtener la duración del servicio desde la base de datos
-    servicio = get_object_or_404(Service, id=servicio_id)
-    duracion = servicio.duration_minutes
-
-    # Lista de horarios posibles en un día laboral (8:00 AM - 6:00 PM)
-    horarios_disponibles = [f"{h}:00" for h in range(8, 18)]  # Horas completas
-
-    # Buscar citas ya reservadas en esta fecha
-    citas_ocupadas = Cita.objects.filter(servicio=servicio, fecha=fecha, estado__in=['pendiente', 'confirmado'])
-
-    # Excluir horarios ocupados
-    ocupados = [cita.hora.strftime('%H:%M') for cita in citas_ocupadas]
-    horarios_libres = [hora for hora in horarios_disponibles if hora not in ocupados]
-
-    return horarios_libres
 
 def mis_citas(request):
     citas = Cita.objects.all()
@@ -324,14 +429,14 @@ def reprogramar_cita(request, cita_id):
 
     if hasattr(request.user, 'staffprofile') or cita.usuario == request.user:
         if request.method == 'POST':
-            form = ReprogramarCitaForm(request.POST, instance=cita)
+            form = CitaForm(horas_disponibles=[], horas_ocupadas=[])
             if form.is_valid():
                 nueva_fecha = form.cleaned_data['fecha']
                 nueva_hora = form.cleaned_data['hora']
 
                 # Validar disponibilidad del nuevo horario
-                horarios_disponibles = get_available_slots(cita.servicio.id, nueva_fecha)
-                if nueva_hora.strftime('%H:%M') not in horarios_disponibles:
+                horas_disponibles = get_precise_available_slots(cita.servicio.id, cita.fecha)
+                if nueva_hora.strftime('%H:%M') not in horas_disponibles:
                     messages.error(request, "Este horario no está disponible. Seleccione otro.")
                     return redirect('reprogramar_cita', cita_id=cita.id)
 
@@ -344,7 +449,7 @@ def reprogramar_cita(request, cita_id):
                 messages.success(request, f"Tu cita para {cita.servicio.name} ha sido reprogramada correctamente.")
                 return redirect('detalle_cita', cita_id=cita.id)
         else:
-            form = ReprogramarCitaForm(instance=cita)
+            form = CitaForm(horas_disponibles=[], horas_ocupadas=[])
 
         return render(request, 'patient/reprogramar_cita.html', {'form': form, 'cita': cita})
 

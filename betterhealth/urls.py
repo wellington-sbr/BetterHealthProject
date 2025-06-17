@@ -32,6 +32,7 @@ urlpatterns = [
     path("staff/delete-service/<int:service_id>/", views.delete_service_view, name="delete_service"),
     path("staff/export-services/", views.export_services_csv, name="export_services_csv"),
     path('cita/<int:cita_id>/invoice/', views.generar_factura, name='generar_factura'),
+    path('get-horarios-disponibles/', views.get_horarios_disponibles, name='get_horarios_disponibles'),
 
 ]
 
