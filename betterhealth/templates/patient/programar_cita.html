@@ -12,9 +12,25 @@
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="servicio">Selecciona un servicio</label>
-                        {{ form.servicio }}
+                        <select name="servicio" class="form-control" required>
+                            <optgroup label="Servicios cubiertos por Mutua">
+                                {% for service in form.fields.servicio.choices.0.1 %}
+                                    <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
+                                        {{ service.1 }}
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Servicios exclusivos de la Clínica">
+                                {% for service in form.fields.servicio.choices.1.1 %}
+                                    <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
+                                        {{ service.1 }}
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
                     </div>
                 </div>
+
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="fecha">Selecciona la fecha de la cita</label>
@@ -29,8 +45,17 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="hora">Selecciona la hora de la cita</label>
-                        {{ form.hora }}
+                        <select name="hora" class="form-control" required>
+                        {% for hora, label in form.fields.hora.choices %}
+                            {% if hora in form.horas_ocupadas %}
+                                <option value="{{ hora }}" class="hora-ocupada" disabled title="Esta hora ya está ocupada">
+                                    {{ label }} (Ocupada)
+                                </option>
+                            {% else %}
+                                <option value="{{ hora }}" class="hora-libre" {% if form.hora.value == hora %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        </select>
                     </div>
                 </div>
             </div>
@@ -58,5 +83,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
-</script>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 {% endblock %}
