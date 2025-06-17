@@ -224,8 +224,11 @@ def programar_cita(request):
         form = CitaForm(request.POST)
         if form.is_valid():
             cita = form.save(commit=False)
-            cita.usuario = request.user
-
+            patient_profile, created = PatientProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'name': request.user.username}
+            )
+            cita.paciente = patient_profile
             # Validar que el servicio tiene horarios disponibles
             horarios_disponibles = get_available_slots(cita.servicio.id, cita.fecha)
             if cita.hora.strftime('%H:%M') not in horarios_disponibles:
