@@ -1,8 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 
 # Create your models here.
-from django.db import models
-from django.contrib.auth.models import User
+
+dni_validator = RegexValidator(
+    regex=r'^\d{8}[A-Za-z]$',
+    message='El DNI debe tener 8 números seguidos de una letra (ejemplo: 12345678A).'
+)
 
 class Service(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -20,9 +25,17 @@ class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     name = models.CharField(max_length=100)
-
     tiene_mutua = models.BooleanField(default=False)
     numero_poliza = models.CharField(max_length=100, blank=True, null=True)
+    dni = models.CharField(
+        max_length=9,
+        blank=True,
+        null=True,
+        validators=[dni_validator]
+    )
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    zip_code = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -51,6 +64,12 @@ class StaffProfile(models.Model):
     role = models.CharField(max_length=20, choices=ROLES)
     name = models.CharField(max_length=100)
     profile_picture = models.ImageField(upload_to='staff_profiles/', null=True, blank=True)
+    dni = models.CharField(
+        max_length=9,
+        blank=True,
+        null=True,
+        validators=[dni_validator]
+    )
 
     def __str__(self):
         return f"{self.name} ({self.get_role_display()})"

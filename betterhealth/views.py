@@ -1,6 +1,8 @@
 import uuid
 import csv
 import io
+from django.shortcuts import render
+from django.utils import timezone
 from datetime import timezone, datetime
 from decimal import Decimal
 from django.db.models import Count, Sum
@@ -140,6 +142,7 @@ def register_view(request):
             profile.name = user.username
             profile.tiene_mutua = request.POST.get('tiene_mutua') == 'on'
             profile.numero_poliza = request.POST.get('numero_poliza', '').strip() if profile.tiene_mutua else ''
+            profile.dni = request.POST.get('dni', '').strip()
             profile.save()
 
             login(request, user)
@@ -303,13 +306,11 @@ def cancelar_cita(request, cita_id):
 @login_required
 def confirmar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
-
     if hasattr(request.user, 'staffprofile'):
         cita.estado = 'confirmado'
         cita.save()
-        messages.success(request, f"La cita para {cita.servicio.name} el {cita.fecha} ha sido confirmada correctamente.")
-        return render(request, 'financial/invoice_templates/client_invoice.html', {'cita': cita})
-
+        # Build invoice_data as in generar_factura or client_invoice_view
+        return generar_factura(request, cita_id)
     return redirect('panel_administrativo')
 
 @login_required
@@ -390,8 +391,16 @@ def generar_factura(request, cita_id):
     try:
         patient_profile = PatientProfile.objects.get(user=cita.usuario)
         nombre_paciente = patient_profile.name
+        address = patient_profile.address or ""
+        city = patient_profile.city or ""
+        zip_code = patient_profile.zip_code or ""
+        dni = patient_profile.dni or ""
     except PatientProfile.DoesNotExist:
         nombre_paciente = cita.usuario.username
+        address = ""
+        city = ""
+        zip_code = ""
+        dni = ""
 
     # Obtener el servicio y su precio de la base de datos
     servicio_obj = cita.servicio
@@ -431,10 +440,10 @@ def generar_factura(request, cita_id):
             'status': 'PAGADO' if tiene_mutua else 'PENDIENTE',
             'client': {
                 'name': nombre_paciente,
-                'dni': "12345678Z",  # En producción sería el DNI real del paciente
-                'address': "Dirección del paciente",  # En producción sería la dirección real
-                'city': "Madrid",
-                'zip': "28001",
+                'dni': dni,
+                'address': address,
+                'city': city,
+                'zip': zip_code,
                 'email': cita.usuario.email
             },
             'service': {
@@ -459,7 +468,8 @@ def generar_factura(request, cita_id):
                 'total': f"{a_pagar:.2f}".replace('.', ',')
             },
             'notes': "Servicio prestado en las instalaciones de BetterHealth."
-        }
+        },
+        'profile': patient_profile if 'patient_profile' in locals() else None,
     }
 
     # Si tiene mutua, agregar info
@@ -618,3 +628,97 @@ def export_services_csv(request):
         ])
 
     return response
+
+def client_invoice_view(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+    profile = cita.usuario.patientprofile
+    service = cita.servicio
+
+    mutua = None
+    mutua_covers_service = False
+
+    # Check if patient has mutua and service is included in mutua
+    if profile.tiene_mutua and profile.numero_poliza and service.included_in_mutual:
+        api_client = MutuaApiClient()
+        mutua_resp = api_client.verificar_pertenencia_mutua(profile.numero_poliza)
+        if mutua_resp.get('success') and mutua_resp.get('data'):
+            mutua_data = mutua_resp['data']
+            mutua = {
+                "name": mutua_data.get("nombre", "Mutua Universal"),
+                "affiliateNumber": profile.numero_poliza,
+                "coverage": mutua_data.get("cobertura", "Completa"),
+            }
+            mutua_covers_service = True
+        else:
+            # Mutua API failed, but patient claims mutua
+            mutua = {
+                "name": "Mutua Universal",
+                "affiliateNumber": profile.numero_poliza,
+                "coverage": "Completa",
+            }
+            mutua_covers_service = True
+
+    # Company info (could be from settings or DB)
+    company_info = {
+        "address": "Calle Principal, 123",
+        "city": "Madrid",
+        "zip": "28001",
+        "country": "España",
+        "phone": "+34 91 123 45 67",
+        "email": "facturacion@betterhealth.es",
+        "cif": "B-12345678"
+    }
+
+    # Service info
+    service_info = {
+        "type": service.service_type,
+        "specialist": getattr(cita, "especialista", None) and cita.especialista.get_full_name() or "",
+        "date": cita.fecha.strftime("%d/%m/%Y"),
+        "time": cita.hora.strftime("%H:%M"),
+    }
+
+    # Items
+    items = [{
+        "description": service.name,
+        "basePrice": f"{service.price:.2f}",
+        "tax": f"{(service.price * 0.21):.2f}",
+        "quantity": 1,
+        "total": f"{(service.price * 1.21):.2f}"
+    }]
+
+    subtotal = float(service.price)
+    tax = subtotal * 0.21
+    total = subtotal + tax
+
+    # If mutua covers the service, discount the total
+    mutual_discount = total if mutua_covers_service else 0.0
+    total_to_pay = 0.0 if mutua_covers_service else total
+
+    invoice_data = {
+        "number": f"INV-{timezone.now().year}-{cita.id:05d}",
+        "date": timezone.now().strftime("%d/%m/%Y"),
+        "status": "PAGADO" if mutua_covers_service else "PENDIENTE",
+        "client": {
+            "name": profile.name,
+            "dni": profile.dni,
+            "address": profile.address,
+            "city": profile.city,
+            "zip": profile.zip_code,
+            "email": profile.email,
+        },
+        "service": service_info,
+        "mutua": mutua,
+        "items": items,
+        "totals": {
+            "subtotal": f"{subtotal:.2f}",
+            "tax": f"{tax:.2f}",
+            "mutualDiscount": f"{mutual_discount:.2f}",
+            "total": f"{total_to_pay:.2f}"
+        },
+        "notes": "Servicio cubierto por Mutua. Factura emitida a efectos informativos." if mutua_covers_service else "",
+        "company": company_info
+    }
+
+    return render(request, "financial/invoice_templates/client_invoice.html", {
+        "invoice_data": invoice_data
+    })
