@@ -88,17 +88,16 @@ WSGI_APPLICATION = 'BetterHealthProject.wsgi.application'
 # postgresql://URL:PORT@USER:PASSWORD/DB_NAME
 
 DATABASES = {
-    'default': {
+    # 'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    # }
 
-    # UNCOMMENT THIS FOR PRODUCTION ONLY
-    # 'default': dj_database_url.config(
+     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-    #       default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a.frankfurt-postgres.render.com/betterhealth_db',
-    #       conn_max_age=600
-    #   )
+           default='postgresql://betterhealth_db_user:9lODosx91i41DoB3mJkV5s3HiuAyGAhZ@dpg-d05rs5idbo4c739083l0-a.frankfurt-postgres.render.com/betterhealth_db',
+           conn_max_age=600
+       )
 }
 
 
