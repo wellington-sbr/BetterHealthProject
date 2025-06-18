@@ -239,56 +239,74 @@
             pointer-events: none;
             z-index: -1;
         }
+
+        .discount-notice {
+            background: #e6f9e6;
+            color: #218838;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div class="watermark">BetterHealth</div>
 
     <div class="invoice-container">
+        {% if invoice_data.mutua %}
+            <div class="discount-notice">
+                Servicio cubierto por Mutua: 100% de descuento aplicado.
+            </div>
+            <div class="mutua-info">
+                <h3>Información de Mutua</h3>
+                <p><strong>Mutua:</strong> <span>{{ invoice_data.mutua.name }}</span></p>
+                <p><strong>Nº Afiliado:</strong> <span>{{ invoice_data.mutua.affiliateNumber }}</span></p>
+                <p><strong>Cobertura:</strong> <span>{{ invoice_data.mutua.coverage }}</span></p>
+            </div>
+        {% endif %}
         <div class="invoice-header">
             <div class="company-info">
                 <div class="company-header">
                     {% load static %}
                     <img src="{% static 'Screenshot 2025-05-21 at 20.55.06.png' %}" alt="BetterHealth Logo" class="logo">
                 </div>
-                    <p>Calle Principal, 123</p>
-                    <p>28001 Madrid, España</p>
-                    <p>Tel: +34 91 123 45 67</p>
-                    <p>Email: facturacion@betterhealth.es</p>
-                    <p>CIF: B-12345678</p>
+                <p>Calle Principal, 123</p>
+                <p>28001 Madrid, España</p>
+                <p>Tel: +34 91 123 45 67</p>
+                <p>Email: facturacion@betterhealth.es</p>
+                <p>CIF: B-12345678</p>
             </div>
 
             <div class="invoice-details">
                 <h2>FACTURA</h2>
-                <p><strong>Nº Factura:</strong> <span id="invoice-number">INV-2025-00001</span></p>
-                <p><strong>Fecha:</strong> <span id="invoice-date">21/05/2025</span></p>
-                <p><strong>Estado:</strong> <span class="status-badge status-pending" id="invoice-status">PENDIENTE</span></p>
+                <p><strong>Nº Factura:</strong> <span>{{ invoice_data.number }}</span></p>
+                <p><strong>Fecha:</strong> <span>{{ invoice_data.date }}</span></p>
+                <p>
+                  <strong>Estado:</strong>
+                  <span class="status-badge {% if invoice_data.status == 'PAGADO' %}status-paid{% else %}status-pending{% endif %}">
+                    {{ invoice_data.status }}
+                  </span>
+                </p>
             </div>
-        </div>
-
-        <div class="mutua-info" id="mutua-section">
-            <h3>Información de Mutua</h3>
-            <p><strong>Mutua:</strong> <span id="mutua-name">Mutua Universal</span></p>
-            <p><strong>Nº Afiliado:</strong> <span id="affiliate-number">MU-123456789</span></p>
-            <p><strong>Cobertura:</strong> <span id="coverage-type">Completa</span></p>
         </div>
 
         <div class="client-info">
             <div class="billing-to">
                 <h3>Facturar a</h3>
-                <p><strong>Nombre:</strong> <span id="client-name">Juan García Pérez</span></p>
-                <p><strong>DNI/NIE:</strong> <span id="client-dni">12345678Z</span></p>
-                <p><strong>Dirección:</strong> <span id="client-address">Calle Ejemplo, 10, 5º B</span></p>
-                <p><strong>Ciudad:</strong> <span id="client-city">Madrid</span>, <span id="client-zip">28001</span></p>
-                <p><strong>Email:</strong> <span id="client-email">juan.garcia@ejemplo.com</span></p>
+                <p><strong>Nombre:</strong> <span>{{ invoice_data.client.name }}</span></p>
+                <p><strong>DNI/NIE:</strong> <span>{{ invoice_data.client.dni }}</span></p>
+                <p><strong>Dirección:</strong> <span>{{ invoice_data.client.address }}</span></p>
+                <p><strong>Ciudad:</strong> <span>{{ invoice_data.client.city }}</span>, <span>{{ invoice_data.client.zip }}</span></p>
+                <p><strong>Email:</strong> <span>{{ invoice_data.client.email }}</span></p>
             </div>
 
             <div class="service-info">
                 <h3>Detalles del Servicio</h3>
-                <p><strong>Tipo:</strong> <span id="service-type">Consulta médica</span></p>
-                <p><strong>Especialista:</strong> <span id="specialist">Dra. María López</span></p>
-                <p><strong>Fecha del servicio:</strong> <span id="service-date">15/05/2025</span></p>
-                <p><strong>Hora:</strong> <span id="service-time">10:30</span></p>
+                <p><strong>Tipo:</strong> <span>{{ invoice_data.service.type }}</span></p>
+                <p><strong>Fecha del servicio:</strong> <span>{{ invoice_data.service.date }}</span></p>
+                <p><strong>Hora:</strong> <span>{{ invoice_data.service.time }}</span></p>
             </div>
         </div>
 
@@ -302,47 +320,43 @@
                     <th>Total</th>
                 </tr>
             </thead>
-            <tbody id="invoice-items">
+            <tbody>
+                {% for item in invoice_data.items %}
                 <tr>
-                    <td>Consulta de especialidad (Cardiología)</td>
-                    <td>120,00 €</td>
-                    <td>25,20 €</td>
-                    <td>1</td>
-                    <td>145,20 €</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.basePrice }} €</td>
+                    <td>{{ item.tax }} €</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.total }} €</td>
                 </tr>
-                <tr>
-                    <td>Electrocardiograma (ECG)</td>
-                    <td>80,00 €</td>
-                    <td>16,80 €</td>
-                    <td>1</td>
-                    <td>96,80 €</td>
-                </tr>
-                <!-- Los items pueden ser dinámicos según el servicio prestado -->
+                {% endfor %}
             </tbody>
         </table>
 
         <div class="total-section">
             <div class="subtotal">
                 <span>Subtotal:</span>
-                <div id="subtotal">200,00 €</div>
+                <div>{{ invoice_data.totals.subtotal }} €</div>
             </div>
             <div class="tax">
                 <span>IVA (21%):</span>
-                <div id="tax-amount">42,00 €</div>
+                <div>{{ invoice_data.totals.tax }} €</div>
             </div>
-            <div id="mutua-discount-section" class="tax">
+            {% if invoice_data.mutua %}
+            <div class="tax">
                 <span>Cubierto por Mutua:</span>
-                <div id="mutua-discount">-242,00 €</div>
+                <div>-{{ invoice_data.totals.mutualDiscount }} €</div>
             </div>
+            {% endif %}
             <div class="total">
                 <span>Total a pagar:</span>
-                <div id="total-amount">0,00 €</div>
+                <div>{{ invoice_data.totals.total }} €</div>
             </div>
         </div>
 
         <div class="notes">
             <h3>Notas</h3>
-            <p id="notes-content">Servicio cubierto por Mutua Universal. Factura emitida a efectos informativos.</p>
+            <p>{{ invoice_data.notes }}</p>
         </div>
 
         <div class="footer">
@@ -352,127 +366,5 @@
 
         <button class="print-button" onclick="window.print()">Imprimir factura</button>
     </div>
-
-    <script>
-        // Este script puede personalizarse para cargar dinámicamente los datos de la factura
-        function loadInvoiceData(invoiceData) {
-            // Rellenar los datos de la factura
-            document.getElementById('invoice-number').textContent = invoiceData.number;
-            document.getElementById('invoice-date').textContent = invoiceData.date;
-            document.getElementById('invoice-status').textContent = invoiceData.status;
-            document.getElementById('invoice-status').className =
-                'status-badge status-' + invoiceData.status.toLowerCase();
-
-            // Información del cliente
-            document.getElementById('client-name').textContent = invoiceData.client.name;
-            document.getElementById('client-dni').textContent = invoiceData.client.dni;
-            document.getElementById('client-address').textContent = invoiceData.client.address;
-            document.getElementById('client-city').textContent = invoiceData.client.city;
-            document.getElementById('client-zip').textContent = invoiceData.client.zip;
-            document.getElementById('client-email').textContent = invoiceData.client.email;
-
-            // Información del servicio
-            document.getElementById('service-type').textContent = invoiceData.service.type;
-            document.getElementById('specialist').textContent = invoiceData.service.specialist;
-            document.getElementById('service-date').textContent = invoiceData.service.date;
-            document.getElementById('service-time').textContent = invoiceData.service.time;
-
-            // Información de la mutua
-            if (invoiceData.mutua) {
-                document.getElementById('mutua-name').textContent = invoiceData.mutua.name;
-                document.getElementById('affiliate-number').textContent = invoiceData.mutua.affiliateNumber;
-                document.getElementById('coverage-type').textContent = invoiceData.mutua.coverage;
-            } else {
-                document.getElementById('mutua-section').style.display = 'none';
-                document.getElementById('mutua-discount-section').style.display = 'none';
-            }
-
-            // Generar items
-            const itemsContainer = document.getElementById('invoice-items');
-            itemsContainer.innerHTML = '';
-
-            invoiceData.items.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.description}</td>
-                    <td>${item.basePrice} €</td>
-                    <td>${item.tax} €</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.total} €</td>
-                `;
-                itemsContainer.appendChild(row);
-            });
-
-            // Totales
-            document.getElementById('subtotal').textContent = invoiceData.totals.subtotal + ' €';
-            document.getElementById('tax-amount').textContent = invoiceData.totals.tax + ' €';
-
-            if (invoiceData.mutua) {
-                document.getElementById('mutua-discount').textContent =
-                    '-' + invoiceData.totals.mutualDiscount + ' €';
-            }
-
-            document.getElementById('total-amount').textContent = invoiceData.totals.total + ' €';
-
-            // Notas
-            if (invoiceData.notes) {
-                document.getElementById('notes-content').textContent = invoiceData.notes;
-            }
-        }
-
-        // Ejemplo de datos para testing - esto sería reemplazado por los datos reales
-        /*
-        const sampleInvoiceData = {
-            number: "INV-2025-00001",
-            date: "21/05/2025",
-            status: "PENDIENTE",
-            client: {
-                name: "Juan García Pérez",
-                dni: "12345678Z",
-                address: "Calle Ejemplo, 10, 5º B",
-                city: "Madrid",
-                zip: "28001",
-                email: "juan.garcia@ejemplo.com"
-            },
-            service: {
-                type: "Consulta médica",
-                specialist: "Dra. María López",
-                date: "15/05/2025",
-                time: "10:30"
-            },
-            mutua: {
-                name: "Mutua Universal",
-                affiliateNumber: "MU-123456789",
-                coverage: "Completa"
-            },
-            items: [
-                {
-                    description: "Consulta de especialidad (Cardiología)",
-                    basePrice: "120,00",
-                    tax: "25,20",
-                    quantity: 1,
-                    total: "145,20"
-                },
-                {
-                    description: "Electrocardiograma (ECG)",
-                    basePrice: "80,00",
-                    tax: "16,80",
-                    quantity: 1,
-                    total: "96,80"
-                }
-            ],
-            totals: {
-                subtotal: "200,00",
-                tax: "42,00",
-                mutualDiscount: "242,00",
-                total: "0,00"
-            },
-            notes: "Servicio cubierto por Mutua Universal. Factura emitida a efectos informativos."
-        };
-
-        // Cargar datos de ejemplo
-        loadInvoiceData(sampleInvoiceData);
-        */
-    </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from betterhealth.models import Service, PatientProfile, Cita
+from betterhealth.api_client import MutuaApiClient
 from decimal import Decimal
 
 class ServiceModelTests(TestCase):
@@ -37,3 +38,11 @@ class PatientProfileTests(TestCase):
         self.assertEqual(self.profile.name, "Test Patient")
         self.assertEqual(self.profile.email, self.user.email)
         self.assertTrue(self.profile.tiene_mutua)
+
+class MutuaApiClientIntegrationTest(TestCase):
+    def test_get_servicios_mutua_returns_data(self):
+        client = MutuaApiClient()
+        response = client.get_servicios_mutua()
+        print("API response:", response)
+        self.assertTrue(response.get("success"))
+        self.assertIn("data", response)
