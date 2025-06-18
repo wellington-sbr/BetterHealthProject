@@ -5,6 +5,15 @@
 {% block bodyclass %}auth-page{% endblock %}
 
 {% block content %}
+{% if form.errors %}
+    <div class="alert alert-danger">
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endif %}
 <div class="form-container">
     <h1>Crear una cuenta</h1>
     <form method="post" class="form">
@@ -31,6 +40,17 @@
         <div class="form-group" id="div_numero_poliza" style="display: none;">
             <label for="numero_poliza">Número de póliza:</label>
             <input type="text" id="numero_poliza" name="numero_poliza" class="form-control">
+        </div>
+
+        <!-- Campo DNI -->
+        <div class="form-group">
+            <label for="id_dni">DNI</label>
+            <input type="text" name="dni" id="id_dni" class="form-control"
+                   value="{{ form.dni.value|default_if_none:'' }}"
+                   pattern="\d{8}[A-Za-z]" maxlength="9" required>
+            {% if form.dni.errors %}
+                <div class="error">{{ form.dni.errors }}</div>
+            {% endif %}
         </div>
         
         <button type="submit" class="button primary">Registrarse</button>

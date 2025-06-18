@@ -1,26 +1,50 @@
+:root {
+    --primary: #005F99;
+    --success: #4CAF50;
+    --gray-light: #F5F5F5;
+    --gray-dark: #333333;
+    --error: #D32F2F;
+    --white: #ffffff;
+    --light-blue: #EBF5FF;
+    --primary-dark: #2980b9;
+    --primary-rgb: 52, 152, 219;
+}
+
 body {
     margin: 0;
-    font-family: 'Inter', sans-serif;
-    background-color: #F5F5F5;
-    color: #333333;
+    font-family: 'Inter', 'Open Sans', 'Segoe UI', sans-serif;
+    background: var(--gray-light);
+    color: var(--gray-dark);
 }
 
 .admin-container {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
+    margin-left: 220px; /* Same as sidebar width */
 }
 
 .sidebar {
-    width: 240px;
-    background-color: #005F99;
-    color: white;
-    padding: 24px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Ensures bottom stays at the bottom */
+    background: var(--white);
+    border-right: 1px solid #eee;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+    padding: 0; /* Remove vertical padding to avoid overflow */
+    z-index: 100;
 }
 
 .sidebar h2 {
-    font-size: 24px;
+    color: var(--primary);
+    font-size: 22px;
     font-weight: bold;
     margin-bottom: 32px;
+    text-align: center;
 }
 
 .sidebar nav ul {
@@ -33,39 +57,120 @@ body {
 }
 
 .sidebar nav ul li a {
-    color: white;
+    color: var(--primary);
     text-decoration: none;
     font-weight: 500;
+    padding: 10px 24px;
+    display: block;
+    border-radius: 8px;
+    transition: background 0.2s;
 }
 
 .sidebar nav ul li a:hover {
-    text-decoration: underline;
+    background: var(--light-blue);
+    color: var(--primary-dark);
 }
 
 .main-content {
     flex: 1;
     padding: 32px;
-    overflow-y: auto;
+    background: var(--gray-light);
 }
 
-button.primary {
-    background-color: #005F99;
-    color: white;
+.card, .content-box {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+button.primary, .button, .btn {
+    background-color: var(--primary);
+    color: var(--white);
     padding: 12px 24px;
     border: none;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
+    transition: background 0.2s;
+    font-size: 16px;
 }
 
 button.primary:hover {
     background-color: #004974;
 }
 
-.card {
-    background-color: white;
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    margin-bottom: 24px;
+.button.secondary, .btn-secondary {
+    background: var(--white);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.button.danger, .btn-danger {
+    background: var(--error);
+    color: var(--white);
+}
+
+.button:disabled, .btn:disabled {
+    background: #ccc;
+    color: #fff;
+    cursor: not-allowed;
+}
+
+.table, table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table th, table th {
+    background: var(--gray-light);
+    color: var(--gray-dark);
+    font-weight: bold;
+    padding: 12px;
+}
+
+.table td, table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.table tr:nth-child(even), table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.sidebar-profile {
+    margin-top: auto;
+    padding: 16px 0 16px 0;
+    border-top: 1px solid #eee;
+    background: var(--white);
+}
+
+.sidebar-logo img {
+    max-width: 120px;
+    width: 70%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.sidebar-profile a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    padding: 0 24px;
+}
+
+.sidebar-profile img,
+.sidebar-profile > div {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
 }

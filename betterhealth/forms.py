@@ -3,6 +3,12 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Cita, PatientProfile, StaffProfile, Service
 import datetime
+from django.core.validators import RegexValidator
+
+dni_validator = RegexValidator(
+    regex=r'^\d{8}[A-Za-z]$',
+    message='El DNI debe tener 8 números seguidos de una letra (ejemplo: 12345678A).'
+)
 
 class ServiceForm(forms.ModelForm):
     class Meta:
@@ -15,6 +21,11 @@ class CSVUploadForm(forms.Form):
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label='Correo Electrónico')
     name = forms.CharField(required=True, label='Nombre')
+    address = forms.CharField(required=True, label='Dirección')
+    city = forms.CharField(required=True, label='Ciudad')
+    zip_code = forms.CharField(required=True, label='Código Postal')
+    tiene_mutua = forms.BooleanField(required=False, label='¿Tienes mutua?')
+    numero_poliza = forms.CharField(required=False, label='Número de póliza')
 
     class Meta:
         model = User
@@ -25,17 +36,30 @@ class CustomUserCreationForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         if commit:
             user.save()
-            PatientProfile.objects.create(user=user, name=self.cleaned_data['name'])
+            PatientProfile.objects.create(
+                user=user,
+                name=self.cleaned_data['name'],
+                address=self.cleaned_data['address'],
+                city=self.cleaned_data['city'],
+                zip_code=self.cleaned_data['zip_code'],
+                tiene_mutua=self.cleaned_data.get('tiene_mutua', False),
+                numero_poliza=self.cleaned_data.get('numero_poliza', ''),
+            )
         return user
 
 class StaffCreationForm(forms.ModelForm):
+    dni = forms.CharField(
+        label="DNI",
+        required=True,
+        validators=[dni_validator]
+    )
     username = forms.CharField(label="Nombre de usuario")
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
     role = forms.ChoiceField(choices=StaffProfile.ROLES, label="Rol")
 
     class Meta:
         model = StaffProfile
-        fields = ['name', 'profile_picture', 'role']  # role se repite, está bien
+        fields = ['name', 'profile_picture', 'role', 'dni']  # role se repite, está bien
 
     def save(self, commit=True):
         user = User.objects.create_user(
@@ -51,9 +75,47 @@ class StaffCreationForm(forms.ModelForm):
 
 
 class PatientProfileForm(forms.ModelForm):
+    dni = forms.CharField(
+        label="DNI",
+        required=True,
+        validators=[dni_validator]
+    )
     class Meta:
         model = PatientProfile
-        fields = ('name', 'profile_picture')
+        fields = ('name', 'profile_picture', 'dni', 'tiene_mutua', 'numero_poliza')
+
+""" 
+class CitaForm(forms.ModelForm):
+    hora = forms.ChoiceField(choices=[], label='Hora')
+
+    class Meta:
+        model = Cita
+        fields = ['servicio', 'fecha', 'hora']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super(CitaForm, self).__init__(*args, **kwargs)
+        services_included= Service.objects.filter(included_in_mutual=True)
+        services_nonincluded = Service.objects.filter(included_in_mutual=False)
+
+
+        grouped_choices = [
+            ("Servicios cubiertos por Mutua", [(s.id, s.name) for s in services_included]),
+            ("Servicios exclusivos de la Clínica", [(s.id, s.name) for s in services_nonincluded]),
+        ]
+        self.fields['servicio'].choices = grouped_choices
+
+
+        HORAS_VALIDAS = [
+            (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
+            for h in list(range(9, 13)) + list(range(15, 20))
+            for m in (0, 30)
+        ]
+        self.fields['hora'].choices = HORAS_VALIDAS
+"""
 
 
 class CitaForm(forms.ModelForm):
@@ -69,6 +131,27 @@ class CitaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CitaForm, self).__init__(*args, **kwargs)
 
+        # Servicios incluidos en mutua
+        services_included = Service.objects.filter(included_in_mutual=True)
+        services_nonincluded = Service.objects.filter(included_in_mutual=False)
+
+        # Crear opciones con información adicional sobre autorización
+        included_choices = []
+        for s in services_included:
+            label = s.name
+            if s.requires_mutual_authorization:
+                label += " (Requiere autorización previa)"
+            included_choices.append((s.id, label))
+
+        nonincluded_choices = [(s.id, s.name) for s in services_nonincluded]
+
+        grouped_choices = [
+            ("Servicios cubiertos por Mutua", included_choices),
+            ("Servicios exclusivos de la Clínica", nonincluded_choices),
+        ]
+        self.fields['servicio'].choices = grouped_choices
+
+        # Horas válidas
         HORAS_VALIDAS = [
             (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
             for h in list(range(9, 13)) + list(range(15, 20))
@@ -77,12 +160,15 @@ class CitaForm(forms.ModelForm):
         self.fields['hora'].choices = HORAS_VALIDAS
 
     def clean_hora(self):
-        hora_str = self.cleaned_data['hora']
-        hora_obj = datetime.datetime.strptime(hora_str, '%H:%M').time()
-        if not ((datetime.time(9, 0) <= hora_obj < datetime.time(13, 0)) or
-                (datetime.time(15, 0) <= hora_obj < datetime.time(20, 0))):
-            raise forms.ValidationError("La hora debe estar entre 9:00–13:00 o 15:00–20:00")
-        return hora_str
+        hora = self.cleaned_data.get('hora')
+        if hora:
+            try:
+                datetime.datetime.strptime(hora, '%H:%M').time()
+                return hora
+            except ValueError:
+                raise forms.ValidationError("Formato de hora inválido")
+        return hora
+
 
     def clean_fecha(self):
         fecha = self.cleaned_data['fecha']

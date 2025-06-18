@@ -1,0 +1,71 @@
+name: Code Quality and Metrics
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y cloc
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install requests coverage radon flake8 flake8-duplicates matplotlib pandas seaborn
+
+      - name: Get PR number
+        if: github.event_name == 'pull_request'
+        run: echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+
+      - name: Run Defect Density Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+        run: |
+          python .github/scripts/defect_density.py
+
+      - name: Run tests with coverage
+        run: |
+          coverage run manage.py test betterhealth
+          coverage report
+          coverage xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Run static analysis (flake8)
+        run: flake8 betterhealth
+
+      - name: Detect code duplication
+        run: |
+          echo "Checking for duplicate code blocks..."
+          flake8 betterhealth --select DUO
+
+      - name: Analyze cyclomatic complexity
+        run: radon cc betterhealth -s
+
+      - name: Generate metrics summary
+        run: |
+          echo "### Quality Metrics Report" >> $GITHUB_STEP_SUMMARY
+          echo "- Cyclomatic Complexity: $(radon cc betterhealth -s | grep 'Average complexity' | awk '{print $4}')" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Coverage: $(coverage report | grep TOTAL | awk '{print $4}')" >> $GITHUB_STEP_SUMMARY
+          echo "- Duplication Warnings: $(flake8 betterhealth --select DUO --count | tail -1)" >> $GITHUB_STEP_SUMMARY

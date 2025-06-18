@@ -17,6 +17,7 @@ urlpatterns = [
     path('accounts/login/', views.login_view, name='login'),
     path('admin-calendar/', views.admin_calendar, name='calendar_admin'),
     path('citas-json/', views.citas_json, name='citas_json'),
+    path('all_services/', views.all_services, name='all_services'),
     path('register-staff/', views.register_staff, name='register_staff'),
     path('admin-panel/', views.admin_panel, name='panel_administrativo'),
 
@@ -31,7 +32,9 @@ urlpatterns = [
     path("staff/delete-service/<int:service_id>/", views.delete_service_view, name="delete_service"),
     path("staff/export-services/", views.export_services_csv, name="export_services_csv"),
     path('cita/<int:cita_id>/invoice/', views.generar_factura, name='generar_factura'),
-
+    path('get-horarios-disponibles/', views.get_horarios_disponibles, name='get_horarios_disponibles'),
+    path('verificar-autorizacion-servicio/', views.verificar_autorizacion_servicio, name='verificar_autorizacion_servicio'),
+    path('staff/profile/', views.staff_profile_view, name='staff_profile'),
 ]
 
 if settings.DEBUG:

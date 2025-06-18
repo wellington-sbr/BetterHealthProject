@@ -1,8 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 
 # Create your models here.
-from django.db import models
-from django.contrib.auth.models import User
+
+dni_validator = RegexValidator(
+    regex=r'^\d{8}[A-Za-z]$',
+    message='El DNI debe tener 8 números seguidos de una letra (ejemplo: 12345678A).'
+)
 
 class Service(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -20,9 +25,22 @@ class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     name = models.CharField(max_length=100)
-
     tiene_mutua = models.BooleanField(default=False)
     numero_poliza = models.CharField(max_length=100, blank=True, null=True)
+
+    # Nuevos campos para verificación
+    mutua_verificada = models.BooleanField(default=False)
+    datos_mutua = models.JSONField(default=dict, blank=True)
+    
+    dni = models.CharField(
+        max_length=9,
+        blank=True,
+        null=True,
+        validators=[dni_validator]
+    )
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    zip_code = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -34,10 +52,15 @@ class PatientProfile(models.Model):
 class Cita(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     servicio = models.ForeignKey(Service, on_delete=models.CASCADE)
+
     fecha = models.DateField()
     hora = models.TimeField()
     importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'),('confirmado', 'Confirmado'),('pendiente', 'Pendiente'),('cancelada', 'Cancelada')],default='pendiente')
+
+    # Nuevos campos para autorización de mutua
+    autorizado_mutua = models.BooleanField(default=False)
+    numero_autorizacion = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio.name} el {self.fecha} a las {self.hora}'
@@ -51,6 +74,12 @@ class StaffProfile(models.Model):
     role = models.CharField(max_length=20, choices=ROLES)
     name = models.CharField(max_length=100)
     profile_picture = models.ImageField(upload_to='staff_profiles/', null=True, blank=True)
+    dni = models.CharField(
+        max_length=9,
+        blank=True,
+        null=True,
+        validators=[dni_validator]
+    )
 
     def __str__(self):
         return f"{self.name} ({self.get_role_display()})"
@@ -62,6 +91,7 @@ class Invoice(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2)
     paid = models.BooleanField(default=False)
     mutua_discount = models.BooleanField(default=False)
+    services = models.ManyToManyField(Service, related_name='invoices')
 
     def __str__(self):
         return f"Factura de {self.patient.name} para {self.cita.servicio.name} el {self.date} con un importe de {self.total}"
