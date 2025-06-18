@@ -79,7 +79,7 @@ def finances_panel(request):
     estadisticas = {
         'citas_por_servicio': list(Cita.objects.values('servicio__name').annotate(total=Count('id')).order_by('-total')),
         'total_citas': Cita.objects.count(),
-        'citas_ultimo_mes': Cita.objects.filter(fecha__gte=datetime.now(timezone.utc).replace(day=1)).count()
+        'citas_ultimo_mes': Cita.objects.filter(fecha__gte=timezone.now().replace(day=1)).count()
     }
 
     # Calcular ingresos estimados dinámicamente desde la base de datos
@@ -144,7 +144,7 @@ def home(request):
 
 def register_view(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = PatientProfileForm(request.POST)
         if form.is_valid():
             tiene_mutua = request.POST.get('tiene_mutua') == 'on'
             numero_poliza = request.POST.get('numero_poliza', '').strip()
@@ -166,8 +166,8 @@ def register_view(request):
             # TERCERO: Crear o actualizar perfil
             profile, created = PatientProfile.objects.get_or_create(user=user)
             profile.name = user.username
-            profile.tiene_mutua = tiene_mutua
-            profile.numero_poliza = numero_poliza if tiene_mutua else ''
+            profile.numero_poliza = form.cleaned_data.get('numero_poliza', '')
+            profile.tiene_mutua = form.cleaned_data.get('tiene_mutua', False)
 
             # Si la mutua fue verificada, guardar datos
             if tiene_mutua and numero_poliza:
@@ -480,64 +480,25 @@ def programar_cita(request):
 
 @login_required
 def verificar_autorizacion_servicio(request):
-    servicio_id = request.GET.get('servicio_id')
     user = request.user
-
-    try:
-        servicio = Service.objects.get(id=servicio_id)
-    except Service.DoesNotExist:
-        return JsonResponse({'autorizado': False, 'mensaje': 'Servicio no válido.'})
-
     try:
         paciente = PatientProfile.objects.get(user=user)
     except PatientProfile.DoesNotExist:
         return JsonResponse({'autorizado': False, 'mensaje': 'Perfil de paciente no encontrado.'})
 
-    # CASO 1: Servicio no está cubierto por mutua
-    if not servicio.included_in_mutual:
+    if not paciente.numero_poliza or not paciente.mutua_verificada:
         return JsonResponse({
             'autorizado': False,
-            'mensaje': 'Servicio exclusivo de la clínica. Se trata como privado.'
+            'mensaje': 'No tienes una mutua verificada. El servicio se tratará como privado.'
         })
 
-    # CASO 2: Paciente sin póliza
-    if not paciente.numero_poliza:
-        return JsonResponse({
-            'autorizado': False,
-            'mensaje': 'Paciente no validado en la mutua. Se trata como servicio privado.'
-        })
-
-    # CASO 3: Verificación en la API
-    validacion = verificar_mutua_paciente(paciente.numero_poliza, paciente.name)
-    if not validacion['valido']:
-        return JsonResponse({
-            'autorizado': False,
-            'mensaje': validacion['error'] or 'Paciente no válido en la mutua.'
-        })
-
-    # CASO 4: Autorización del servicio
-    resultado = solicitar_autorizacion_mutua(
-        numero_poliza=paciente.numero_poliza,
-        servicio_id=servicio_id,
-        fecha_cita=timezone.now().date(),  # o request.GET.get('fecha') si lo pasas
-        nombre_paciente=paciente.name
-    )
-
-    if resultado['autorizado']:
-        return JsonResponse({
-            'autorizado': True,
-            'mensaje': f"Servicio autorizado por la mutua. Nº autorización: {resultado['numero_autorizacion']}"
-        })
-    else:
-        return JsonResponse({
-            'autorizado': False,
-            'mensaje': f"Servicio no autorizado por la mutua: {resultado['motivo']}"
-        })
-
-
+    return JsonResponse({
+        'autorizado': True,
+        'mensaje': 'Tienes una mutua verificada. El servicio será cubierto si corresponde.'
+    })
 
 def mis_citas(request):
-    citas = Cita.objects.all()
+    citas = Cita.objects.filter(usuario=request.user)
     servicio_input = request.GET.get('servicio')
     fecha = request.GET.get('fecha')
     servicio_invalido = False
@@ -621,7 +582,7 @@ def reprogramar_cita(request, cita_id):
                 messages.success(request, f"Tu cita para {cita.servicio.name} ha sido reprogramada correctamente.")
                 return redirect('detalle_cita', cita_id=cita.id)
         else:
-            form = CitaForm(horas_disponibles=[], horas_ocupadas=[])
+            form = CitaForm()
 
         return render(request, 'patient/reprogramar_cita.html', {'form': form, 'cita': cita})
 
@@ -663,7 +624,7 @@ def generar_factura(request, cita_id):
         return redirect('mis_citas')
 
     # Generar número de factura único
-    fecha_actual = datetime.now(timezone.utc)
+    fecha_actual = timezone.now()  # Uses Django's timezone setting
     numero_factura = f"INV-{fecha_actual.year}-{uuid.uuid4().hex[:6].upper()}"
 
     # Obtener información del paciente

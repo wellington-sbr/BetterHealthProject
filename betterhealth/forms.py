@@ -24,6 +24,8 @@ class CustomUserCreationForm(UserCreationForm):
     address = forms.CharField(required=True, label='Dirección')
     city = forms.CharField(required=True, label='Ciudad')
     zip_code = forms.CharField(required=True, label='Código Postal')
+    tiene_mutua = forms.BooleanField(required=False, label='¿Tienes mutua?')
+    numero_poliza = forms.CharField(required=False, label='Número de póliza')
 
     class Meta:
         model = User
@@ -40,6 +42,8 @@ class CustomUserCreationForm(UserCreationForm):
                 address=self.cleaned_data['address'],
                 city=self.cleaned_data['city'],
                 zip_code=self.cleaned_data['zip_code'],
+                tiene_mutua=self.cleaned_data.get('tiene_mutua', False),
+                numero_poliza=self.cleaned_data.get('numero_poliza', ''),
             )
         return user
 
@@ -78,7 +82,7 @@ class PatientProfileForm(forms.ModelForm):
     )
     class Meta:
         model = PatientProfile
-        fields = ('name', 'profile_picture', 'dni')
+        fields = ('name', 'profile_picture', 'dni', 'tiene_mutua', 'numero_poliza')
 
 """ 
 class CitaForm(forms.ModelForm):

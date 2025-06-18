@@ -116,19 +116,6 @@
 
             </div>
         </div>
-    {% else %}
-        <!-- No hay citas registradas -->
-        <div class="empty-state">
-            <div class="empty-state-icon">
-                <i class="icon-calendar-empty"></i>
-            </div>
-            <h3>No tienes citas agendadas</h3>
-            <p>Aún no has agendado ninguna cita médica.</p>
-            <a href="{% url 'nueva_cita' %}" class="button primary">
-                <i class="icon-plus"></i>
-                Agendar mi primera cita
-            </a>
-        </div>
         {% endif %}
         </div>
     {% endif %}
