@@ -2,13 +2,14 @@ import uuid
 import csv
 import io
 from datetime import timezone, datetime, timedelta, time
+from django.utils import timezone
 from decimal import Decimal
 from django.db.models import Count, Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
@@ -114,11 +115,15 @@ def staff_required(role=None):
         return _wrapped_view
     return decorator
 
+def boss_only(user):
+    return user.is_authenticated and user.username == "boss"
+
+@user_passes_test(boss_only)
 def register_staff(request):
     if request.method == 'POST':
         form = StaffCreationForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()  # Esto ya crea el User y el StaffProfile dentro del form
+            form.save()
             messages.success(request, "Nuevo miembro del personal registrado.")
             if form.cleaned_data['role'] == 'admin':
                 return redirect('panel_administrativo')
@@ -174,6 +179,7 @@ def register_view(request):
                 except Exception:
                     profile.mutua_verificada = False
 
+            profile.dni = request.POST.get('dni', '').strip()
             profile.save()
 
             login(request, user)
@@ -579,13 +585,11 @@ def cancelar_cita(request, cita_id):
 @login_required
 def confirmar_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
-
     if hasattr(request.user, 'staffprofile'):
         cita.estado = 'confirmado'
         cita.save()
-        messages.success(request, f"La cita para {cita.servicio.name} el {cita.fecha} ha sido confirmada correctamente.")
-        return render(request, 'financial/invoice_templates/client_invoice.html', {'cita': cita})
-
+        # Build invoice_data as in generar_factura or client_invoice_view
+        return generar_factura(request, cita_id)
     return redirect('panel_administrativo')
 
 @login_required
@@ -666,8 +670,16 @@ def generar_factura(request, cita_id):
     try:
         patient_profile = PatientProfile.objects.get(user=cita.usuario)
         nombre_paciente = patient_profile.name
+        address = patient_profile.address or ""
+        city = patient_profile.city or ""
+        zip_code = patient_profile.zip_code or ""
+        dni = patient_profile.dni or ""
     except PatientProfile.DoesNotExist:
         nombre_paciente = cita.usuario.username
+        address = ""
+        city = ""
+        zip_code = ""
+        dni = ""
 
     # Obtener el servicio y su precio de la base de datos
     servicio_obj = cita.servicio
@@ -707,10 +719,10 @@ def generar_factura(request, cita_id):
             'status': 'PAGADO' if tiene_mutua else 'PENDIENTE',
             'client': {
                 'name': nombre_paciente,
-                'dni': "12345678Z",  # En producción sería el DNI real del paciente
-                'address': "Dirección del paciente",  # En producción sería la dirección real
-                'city': "Madrid",
-                'zip': "28001",
+                'dni': dni,
+                'address': address,
+                'city': city,
+                'zip': zip_code,
                 'email': cita.usuario.email
             },
             'service': {
@@ -735,7 +747,8 @@ def generar_factura(request, cita_id):
                 'total': f"{a_pagar:.2f}".replace('.', ',')
             },
             'notes': "Servicio prestado en las instalaciones de BetterHealth."
-        }
+        },
+        'profile': patient_profile if 'patient_profile' in locals() else None,
     }
 
     # Si tiene mutua, agregar info
@@ -809,7 +822,7 @@ def listado_facturas(request):
         'servicios': Cita.objects.values_list('servicio', flat=True).distinct(),  # Obtener lista de servicios
     })
 
-
+@user_passes_test(boss_only)
 def import_services_view(request):
     services = Service.objects.all()
 
@@ -857,6 +870,7 @@ def import_services_view(request):
         "services": services
     })
 
+@user_passes_test(boss_only)
 def add_service_view(request):
     if request.method == "POST":
         form = ServiceForm(request.POST)
@@ -867,12 +881,14 @@ def add_service_view(request):
     return redirect("import_services")
 
 
+@user_passes_test(boss_only)
 def delete_service_view(request, service_id):
     service = Service.objects.get(id=service_id)
     service.delete()
     messages.success(request, "Servicio eliminado correctamente.")
     return redirect("import_services")
 
+@user_passes_test(boss_only)
 def export_services_csv(request):
     services = Service.objects.all()
     response = HttpResponse(content_type="text/csv")
@@ -935,3 +951,119 @@ def all_services(request):
         "search_query": search_query,
         "selected_type": service_type,
     })
+
+def client_invoice_view(request, cita_id):
+    cita = get_object_or_404(Cita, id=cita_id)
+    profile = cita.usuario.patientprofile
+    service = cita.servicio
+
+    mutua = None
+    mutua_covers_service = False
+    mutua_authorized = False
+
+    # Check if patient has mutua and service is included in mutua
+    if profile.tiene_mutua and profile.numero_poliza and service.included_in_mutual:
+        api_client = MutuaApiClient()
+        mutua_resp = api_client.verificar_pertenencia_mutua(profile.numero_poliza)
+        if mutua_resp.get('success') and mutua_resp.get('data'):
+            mutua_data = mutua_resp['data']
+            mutua = {
+                "name": mutua_data.get("nombre", "Mutua Universal"),
+                "affiliateNumber": profile.numero_poliza,
+                "coverage": mutua_data.get("cobertura", "Completa"),
+            }
+            mutua_covers_service = True
+
+            # If the service requires authorization, check it
+            if service.requires_mutual_authorization:
+                auth_resp = api_client.consultar_historial_autorizaciones(profile.id)
+                if auth_resp.get('success') and auth_resp.get('data'):
+                    for auth in auth_resp['data']:
+                        if str(auth.get('servicio_id')) == str(service.id) and auth.get('autorizado'):
+                            mutua_authorized = True
+                            break
+                else:
+                    mutua_authorized = False
+            else:
+                mutua_authorized = True  # No authorization needed
+        else:
+            mutua = {
+                "name": "Mutua Universal",
+                "affiliateNumber": profile.numero_poliza,
+                "coverage": "Desconocida",
+            }
+            mutua_covers_service = False
+            mutua_authorized = False
+
+    # Company info (hardcoded as per your request)
+    company_info = {
+        "address": "Calle Principal, 123",
+        "city": "Madrid",
+        "zip": "28001",
+        "country": "España",
+        "phone": "+34 91 123 45 67",
+        "email": "facturacion@betterhealth.es",
+        "cif": "B-12345678"
+    }
+
+    # Service info
+    service_info = {
+        "type": service.service_type,
+        "date": cita.fecha.strftime("%d/%m/%Y"),
+        "time": cita.hora.strftime("%H:%M"),
+    }
+
+    # Items
+    items = [{
+        "description": service.name,
+        "basePrice": f"{service.price:.2f}",
+        "tax": f"{(service.price * 0.21):.2f}",
+        "quantity": 1,
+        "total": f"{(service.price * 1.21):.2f}"
+    }]
+
+    subtotal = float(service.price)
+    tax = subtotal * 0.21
+    total = subtotal + tax
+
+    # Mutua discount logic
+    mutual_discount = total if (mutua_covers_service and mutua_authorized) else 0.0
+    total_to_pay = 0.0 if (mutua_covers_service and mutua_authorized) else total
+
+    invoice_data = {
+        "number": f"INV-{timezone.now().year}-{cita.id:05d}",
+        "date": timezone.now().strftime("%d/%m/%Y"),
+        "status": "PAGADO" if mutual_discount else "PENDIENTE",
+        "client": {
+            "name": profile.name,
+            "dni": profile.dni,
+            "address": profile.address,
+            "city": profile.city,
+            "zip": profile.zip_code,
+            "email": profile.email,
+        },
+        "service": service_info,
+        "mutua": mutua if (mutua_covers_service and mutua_authorized) else None,
+        "items": items,
+        "totals": {
+            "subtotal": f"{subtotal:.2f}",
+            "tax": f"{tax:.2f}",
+            "mutualDiscount": f"{mutual_discount:.2f}",
+            "total": f"{total_to_pay:.2f}"
+        },
+        "notes": (
+            "Servicio cubierto por Mutua. Factura emitida a efectos informativos."
+            if (mutua_covers_service and mutua_authorized)
+            else "Servicio prestado en las instalaciones de BetterHealth."
+        ),
+        "company": company_info
+    }
+
+    return render(request, "financial/invoice_templates/client_invoice.html", {
+        "invoice_data": invoice_data
+    })
+
+@login_required
+def staff_profile_view(request):
+    staff = StaffProfile.objects.get(user=request.user)
+    return render(request, 'staff_profile.html', {'staff': staff})

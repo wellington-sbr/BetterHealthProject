@@ -3,6 +3,12 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Cita, PatientProfile, StaffProfile, Service
 import datetime
+from django.core.validators import RegexValidator
+
+dni_validator = RegexValidator(
+    regex=r'^\d{8}[A-Za-z]$',
+    message='El DNI debe tener 8 números seguidos de una letra (ejemplo: 12345678A).'
+)
 
 class ServiceForm(forms.ModelForm):
     class Meta:
@@ -15,6 +21,9 @@ class CSVUploadForm(forms.Form):
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label='Correo Electrónico')
     name = forms.CharField(required=True, label='Nombre')
+    address = forms.CharField(required=True, label='Dirección')
+    city = forms.CharField(required=True, label='Ciudad')
+    zip_code = forms.CharField(required=True, label='Código Postal')
 
     class Meta:
         model = User
@@ -25,17 +34,28 @@ class CustomUserCreationForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         if commit:
             user.save()
-            PatientProfile.objects.create(user=user, name=self.cleaned_data['name'])
+            PatientProfile.objects.create(
+                user=user,
+                name=self.cleaned_data['name'],
+                address=self.cleaned_data['address'],
+                city=self.cleaned_data['city'],
+                zip_code=self.cleaned_data['zip_code'],
+            )
         return user
 
 class StaffCreationForm(forms.ModelForm):
+    dni = forms.CharField(
+        label="DNI",
+        required=True,
+        validators=[dni_validator]
+    )
     username = forms.CharField(label="Nombre de usuario")
     password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
     role = forms.ChoiceField(choices=StaffProfile.ROLES, label="Rol")
 
     class Meta:
         model = StaffProfile
-        fields = ['name', 'profile_picture', 'role']  # role se repite, está bien
+        fields = ['name', 'profile_picture', 'role', 'dni']  # role se repite, está bien
 
     def save(self, commit=True):
         user = User.objects.create_user(
@@ -51,9 +71,14 @@ class StaffCreationForm(forms.ModelForm):
 
 
 class PatientProfileForm(forms.ModelForm):
+    dni = forms.CharField(
+        label="DNI",
+        required=True,
+        validators=[dni_validator]
+    )
     class Meta:
         model = PatientProfile
-        fields = ('name', 'profile_picture')
+        fields = ('name', 'profile_picture', 'dni')
 
 """ 
 class CitaForm(forms.ModelForm):

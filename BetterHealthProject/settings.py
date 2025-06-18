@@ -36,6 +36,7 @@ DEBUG = env.bool("DEBUG")                # Obtenido del .env
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
     'https://betterhealthproject.onrender.com',
+    'https://betterhealthproject-1-wofk.onrender.com', # Works for this major patch branch, to test and not conflict with production
 ]
 
 # Application definition
@@ -179,3 +180,41 @@ LOGIN_REDIRECT_URL = 'home'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+def create_default_admin():
+    from django.contrib.auth import get_user_model
+    from betterhealth.models import StaffProfile
+
+    username = "boss"
+    password = os.environ.get("BOSS_ADMIN_PASSWORD")
+    if not password:
+        print("Environment variable BOSS_ADMIN_PASSWORD not set. Default admin not created.")
+        return
+
+    User = get_user_model()
+    user, created = User.objects.get_or_create(username=username, defaults={
+        "email": "boss@betterhealth.com",
+        "is_staff": True,
+        "is_superuser": False,
+    })
+    if created:
+        user.set_password(password)
+        user.save()
+        print("Default admin user 'boss' created.")
+
+    staff_profile, sp_created = StaffProfile.objects.get_or_create(user=user, defaults={
+        "name": "Boss",
+        "role": "admin",
+    })
+    if not sp_created and staff_profile.role != "admin":
+        staff_profile.role = "admin"
+        staff_profile.save()
+        print("StaffProfile for 'boss' updated to role 'admin'.")
+
+if os.environ.get("RUN_MAIN") == "true":
+    try:
+        import django
+        django.setup()
+        create_default_admin()
+    except Exception:
+        pass
