@@ -6,13 +6,15 @@
     <div class="container">
         <h1 class="page-title">Programar Nueva Cita</h1>
 
-        <form method="post">
+        <form method="post" id="cita-form">
             {% csrf_token %}
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="servicio">Selecciona un servicio</label>
-                        <select name="servicio" class="form-control" required>
+                        <select name="servicio" id="servicio" class="form-control" required>
+                        <div id="mensaje-autorizacion" class="mt-2 text-info"></div>
+                            <option value="">-- Selecciona un servicio --</option>
                             <optgroup label="Servicios cubiertos por Mutua">
                                 {% for service in form.fields.servicio.choices.0.1 %}
                                     <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
@@ -43,51 +45,199 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="form-group">
-                        <select name="hora" class="form-control" required>
-                        {% for hora, label in form.fields.hora.choices %}
-                            {% if hora in form.horas_ocupadas %}
-                                <option value="{{ hora }}" class="hora-ocupada" disabled title="Esta hora ya está ocupada">
-                                    {{ label }} (Ocupada)
-                                </option>
-                            {% else %}
-                                <option value="{{ hora }}" class="hora-libre" {% if form.hora.value == hora %}selected{% endif %}>{{ label }}</option>
-                            {% endif %}
-                        {% endfor %}
-                        </select>
+                        <label>Selecciona la hora de la cita</label>
+                        <div class="horarios-legend" style="display: none;">
+                            <small>
+                                <span class="disponible-legend">⬜ Disponible</span> |
+                                <span class="ocupado-legend">🟥 No disponible</span>
+                            </small>
+                        </div>
+                        <div id="horarios-container" class="horarios-grid">
+                            <p class="text-muted">Selecciona un servicio y una fecha primero</p>
+                        </div>
+                        <input type="hidden" name="hora" id="hora-selected" required>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Guardar cita</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn" disabled>Guardar cita</button>
         </form>
     </div>
+
+<style>
+.horarios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fafafa;
+}
+
+.horario-slot {
+    padding: 8px 12px;
+    border: 1px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 65px;
+    transition: all 0.2s;
+}
+
+.horario-slot:hover:not(.ocupado) {
+    background-color: #007bff;
+    color: white;
+}
+
+.horario-slot.selected {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.horario-slot.ocupado {
+    background-color: #ffcdd2;
+    border-color: #f44336;
+    color: #c62828;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.horarios-legend {
+    margin-bottom: 10px;
+}
+
+.disponible-legend {
+    color: #007bff;
+}
+
+.ocupado-legend {
+    color: #f44336;
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const fechaInput = document.querySelector('input[type="date"]');
+    const servicioSelect = document.getElementById('servicio');
+    const horariosContainer = document.getElementById('horarios-container');
+    const horaHidden = document.getElementById('hora-selected');
+    const submitBtn = document.getElementById('submit-btn');
     const mensajeError = document.getElementById('fecha-error');
+    const legend = document.querySelector('.horarios-legend');
 
-    if (fechaInput) {
-        fechaInput.addEventListener('change', function () {
-            const fechaSeleccionada = new Date(this.value);
-            const diaSemana = fechaSeleccionada.getDay();
+    // Validación de fin de semana
+    fechaInput.addEventListener('change', function () {
+        const fechaSeleccionada = new Date(this.value + 'T00:00:00');
+        const diaSemana = fechaSeleccionada.getDay();
 
-            if (diaSemana === 0 || diaSemana === 6) {
-                mensajeError.style.display = 'block';
-                this.value = '';
-            } else {
-                mensajeError.style.display = 'none';
-            }
+        if (diaSemana === 0 || diaSemana === 6) {
+            mensajeError.style.display = 'block';
+            this.value = '';
+            limpiarHorarios();
+        } else {
+            mensajeError.style.display = 'none';
+            cargarHorarios();
+        }
+    });
+
+    // Cambio de servicio
+    servicioSelect.addEventListener('change', cargarHorarios);
+
+    servicioSelect.addEventListener('change', function () {
+    const servicioId = this.value;
+    const mensajeDiv = document.getElementById('mensaje-autorizacion');
+    mensajeDiv.textContent = '';
+
+    if (servicioId) {
+        fetch(`/verificar-autorizacion-servicio/?servicio_id=${servicioId}`)
+            .then(response => response.json())
+            .then(data => {
+                mensajeDiv.textContent = data.mensaje;
+                mensajeDiv.className = data.autorizado ? 'mt-2 text-success' : 'mt-2 text-danger';
+            })
+            .catch(error => {
+                mensajeDiv.textContent = 'Error al verificar autorización.';
+                mensajeDiv.className = 'mt-2 text-danger';
+            });
+    }
+    });
+
+    function limpiarHorarios() {
+        horariosContainer.innerHTML = '<p class="text-muted">Selecciona un servicio y una fecha primero</p>';
+        horaHidden.value = '';
+        submitBtn.disabled = true;
+        legend.style.display = 'none';
+    }
+
+    function cargarHorarios() {
+        const servicioId = servicioSelect.value;
+        const fecha = fechaInput.value;
+
+        if (!servicioId || !fecha) {
+            limpiarHorarios();
+            return;
+        }
+
+        // Mostrar loading
+        horariosContainer.innerHTML = '<p class="text-muted">Cargando horarios...</p>';
+
+        // Hacer petición AJAX
+        fetch(`/get-horarios-disponibles/?servicio=${servicioId}&fecha=${fecha}`)
+            .then(response => response.json())
+            .then(data => {
+                mostrarHorarios(data.horarios, data.ocupados);
+                legend.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                horariosContainer.innerHTML = '<p class="text-danger">Error al cargar horarios</p>';
+            });
+    }
+
+    function mostrarHorarios(disponibles, ocupados) {
+        // Todos los horarios posibles de la clínica
+        const todosHorarios = [
+            '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+            '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
+        ];
+
+        let html = '';
+
+        todosHorarios.forEach(hora => {
+            const isDisponible = disponibles.includes(hora);
+            const claseCSS = isDisponible ? '' : 'ocupado';
+
+            html += `<div class="horario-slot ${claseCSS}" data-hora="${hora}">${hora}</div>`;
+        });
+
+        horariosContainer.innerHTML = html;
+
+        // Agregar event listeners solo a los disponibles
+        document.querySelectorAll('.horario-slot:not(.ocupado)').forEach(slot => {
+            slot.addEventListener('click', function() {
+                // Quitar selección previa
+                document.querySelectorAll('.horario-slot.selected').forEach(s => {
+                    s.classList.remove('selected');
+                });
+
+                // Seleccionar actual
+                this.classList.add('selected');
+                horaHidden.value = this.dataset.hora;
+                submitBtn.disabled = false;
+            });
         });
     }
 });
-
-
-
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</script>
 
 {% endblock %}

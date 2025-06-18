@@ -27,6 +27,11 @@ class PatientProfile(models.Model):
     name = models.CharField(max_length=100)
     tiene_mutua = models.BooleanField(default=False)
     numero_poliza = models.CharField(max_length=100, blank=True, null=True)
+
+    # Nuevos campos para verificación
+    mutua_verificada = models.BooleanField(default=False)
+    datos_mutua = models.JSONField(default=dict, blank=True)
+    
     dni = models.CharField(
         max_length=9,
         blank=True,
@@ -47,10 +52,15 @@ class PatientProfile(models.Model):
 class Cita(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     servicio = models.ForeignKey(Service, on_delete=models.CASCADE)
+
     fecha = models.DateField()
     hora = models.TimeField()
     importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'),('confirmado', 'Confirmado'),('pendiente', 'Pendiente'),('cancelada', 'Cancelada')],default='pendiente')
+
+    # Nuevos campos para autorización de mutua
+    autorizado_mutua = models.BooleanField(default=False)
+    numero_autorizacion = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio.name} el {self.fecha} a las {self.hora}'
