@@ -5,6 +5,15 @@
 {% block bodyclass %}auth-page{% endblock %}
 
 {% block content %}
+{% if form.errors %}
+    <div class="alert alert-danger">
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endif %}
 <div class="form-container">
     <h1>Crear una cuenta</h1>
     <form method="post" class="form">

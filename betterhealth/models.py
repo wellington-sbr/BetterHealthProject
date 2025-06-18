@@ -20,14 +20,14 @@ class PatientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
     name = models.CharField(max_length=100)
-    """ 
+
     tiene_mutua = models.BooleanField(default=False)
     numero_poliza = models.CharField(max_length=100, blank=True, null=True)
     
     # Nuevos campos para verificación
     mutua_verificada = models.BooleanField(default=False)
     datos_mutua = models.JSONField(default=dict, blank=True)
-    """
+    
 
     def __str__(self):
         return self.name
@@ -44,11 +44,11 @@ class Cita(models.Model):
     hora = models.TimeField()
     importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     estado = models.CharField(max_length=20, choices=[('pagado', 'Pagado'),('confirmado', 'Confirmado'),('pendiente', 'Pendiente'),('cancelada', 'Cancelada')],default='pendiente')
-    """ 
+
     # Nuevos campos para autorización de mutua
     autorizado_mutua = models.BooleanField(default=False)
     numero_autorizacion = models.CharField(max_length=100, blank=True, null=True)
-    """
+
     def __str__(self):
         return f'Cita de {self.usuario.username} para {self.servicio.name} el {self.fecha} a las {self.hora}'
 

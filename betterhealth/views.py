@@ -19,6 +19,8 @@ from django.utils.dateparse import parse_date
 from .models import PatientProfile, Cita, Service, StaffProfile, Invoice
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from .utils import verificar_mutua_paciente
+from django.db import IntegrityError
 
 
 @login_required
@@ -126,32 +128,52 @@ def register_staff(request):
         form = StaffCreationForm()
     return render(request, 'register_staff.html', {'form': form})
 
+
+
 @login_required
 def home(request):
     return render(request, 'patient/home.html')
+
+
 
 
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
             tiene_mutua = request.POST.get('tiene_mutua') == 'on'
             numero_poliza = request.POST.get('numero_poliza', '').strip()
+            nombre_usuario = form.cleaned_data.get('username', '').strip()
 
-            # Verificar mutua si es necesario
             if tiene_mutua and numero_poliza:
-                if not verificar_mutua_paciente(numero_poliza):
-                    messages.error(request, 'El número de póliza no es válido o no pertenece a nuestra mutua.')
+                try:
+                    verificacion = verificar_mutua_paciente(numero_poliza, nombre_usuario)
+                    if not verificacion['valido']:
+                        messages.error(request, verificacion['error'] or 'Verificación fallida')
+                        return render(request, 'patient/register.html', {'form': form})
+                except Exception as e:
+                    messages.error(request, 'Error al verificar la mutua')
                     return render(request, 'patient/register.html', {'form': form})
 
-            # Solo crear perfil si no existe
+            # SEGUNDO: Solo crear usuario si todo está bien
             user = form.save()
+
+            # TERCERO: Crear o actualizar perfil
             profile, created = PatientProfile.objects.get_or_create(user=user)
             profile.name = user.username
             profile.tiene_mutua = tiene_mutua
             profile.numero_poliza = numero_poliza if tiene_mutua else ''
-            profile.mutua_verificada = tiene_mutua and numero_poliza and True
+
+            # Si la mutua fue verificada, guardar datos
+            if tiene_mutua and numero_poliza:
+                try:
+                    # Ya sabemos que es válida porque la verificamos arriba
+                    verificacion = verificar_mutua_paciente(numero_poliza)
+                    profile.mutua_verificada = True
+                    profile.datos_mutua = verificacion.get('datos', {})
+                except Exception:
+                    profile.mutua_verificada = False
+
             profile.save()
 
             login(request, user)
@@ -162,16 +184,6 @@ def register_view(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'patient/register.html', {'form': form})
-
-def verificar_mutua_paciente(numero_poliza):
-    """Función auxiliar para verificar mutua"""
-    try:
-        api_client = MutuaAPIClient()
-        verificacion = api_client.verificar_pertenencia_mutua(numero_poliza)
-        return verificacion.get('success', False) and verificacion.get('data', {}).get('pertenece_mutua', False)
-    except Exception as e:
-        print(f"Error verificando mutua: {e}")
-        return False
 
 def login_view(request):
     if request.method == 'POST':
