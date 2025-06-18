@@ -182,7 +182,7 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 def create_default_admin():
     from django.contrib.auth import get_user_model
-    from betterhealth.models import StaffProfile  
+    from betterhealth.models import StaffProfile
 
     username = "boss"
     password = os.environ.get("BOSS_ADMIN_PASSWORD")
@@ -200,9 +200,6 @@ def create_default_admin():
         user.set_password(password)
         user.save()
         print("Default admin user 'boss' created.")
-    else:
-        # Optionally update password if you want to reset it every time
-        pass
 
     staff_profile, sp_created = StaffProfile.objects.get_or_create(user=user, defaults={
         "name": "Boss",

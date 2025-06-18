@@ -37,9 +37,12 @@
     <thead>
         <tr>
             <th>Nombre</th>
+            <th>Descripción</th>
             <th>Tipo</th>
             <th>Precio (€)</th>
-            <th>Duración</th>
+            <th>Incluido en Mutua</th>
+            <th>Duración (min)</th>
+            <th>Requiere Autorización Mutua</th>
             <th>Opciones</th>
         </tr>
     </thead>
@@ -47,9 +50,12 @@
         {% for service in services %}
         <tr>
             <td>{{ service.name }}</td>
+            <td>{{ service.description }}</td>
             <td>{{ service.service_type }}</td>
             <td>{{ service.price }}</td>
-            <td>{{ service.duration_minutes }} min</td>
+            <td>{{ service.included_in_mutual }}</td>
+            <td>{{ service.duration_minutes }}</td>
+            <td>{{ service.requires_mutual_authorization }}</td>
             <td>
                 <form method="post" action="{% url 'delete_service' service.id %}">
                     {% csrf_token %}

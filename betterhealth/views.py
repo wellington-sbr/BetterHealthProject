@@ -701,9 +701,7 @@ def client_invoice_view(request, cita_id):
             # If the service requires authorization, check it
             if service.requires_mutual_authorization:
                 auth_resp = api_client.consultar_historial_autorizaciones(profile.id)
-                # You may need to adapt this logic to your API's response structure
                 if auth_resp.get('success') and auth_resp.get('data'):
-                    # Check if the service is authorized (example logic)
                     for auth in auth_resp['data']:
                         if str(auth.get('servicio_id')) == str(service.id) and auth.get('autorizado'):
                             mutua_authorized = True

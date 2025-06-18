@@ -81,6 +81,7 @@ class Invoice(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2)
     paid = models.BooleanField(default=False)
     mutua_discount = models.BooleanField(default=False)
+    services = models.ManyToManyField(Service, related_name='invoices')
 
     def __str__(self):
         return f"Factura de {self.patient.name} para {self.cita.servicio.name} el {self.date} con un importe de {self.total}"

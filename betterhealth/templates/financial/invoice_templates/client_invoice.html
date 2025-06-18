@@ -239,12 +239,33 @@
             pointer-events: none;
             z-index: -1;
         }
+
+        .discount-notice {
+            background: #e6f9e6;
+            color: #218838;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div class="watermark">BetterHealth</div>
 
     <div class="invoice-container">
+        {% if invoice_data.mutua %}
+            <div class="discount-notice">
+                Servicio cubierto por Mutua: 100% de descuento aplicado.
+            </div>
+            <div class="mutua-info">
+                <h3>Información de Mutua</h3>
+                <p><strong>Mutua:</strong> <span>{{ invoice_data.mutua.name }}</span></p>
+                <p><strong>Nº Afiliado:</strong> <span>{{ invoice_data.mutua.affiliateNumber }}</span></p>
+                <p><strong>Cobertura:</strong> <span>{{ invoice_data.mutua.coverage }}</span></p>
+            </div>
+        {% endif %}
         <div class="invoice-header">
             <div class="company-info">
                 <div class="company-header">
@@ -270,15 +291,6 @@
                 </p>
             </div>
         </div>
-
-        {% if invoice_data.mutua %}
-        <div class="mutua-info">
-            <h3>Información de Mutua</h3>
-            <p><strong>Mutua:</strong> <span>{{ invoice_data.mutua.name }}</span></p>
-            <p><strong>Nº Afiliado:</strong> <span>{{ invoice_data.mutua.affiliateNumber }}</span></p>
-            <p><strong>Cobertura:</strong> <span>{{ invoice_data.mutua.coverage }}</span></p>
-        </div>
-        {% endif %}
 
         <div class="client-info">
             <div class="billing-to">
