@@ -136,12 +136,22 @@ def register_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            tiene_mutua = request.POST.get('tiene_mutua') == 'on'
+            numero_poliza = request.POST.get('numero_poliza', '').strip()
+
+            # Verificar mutua si es necesario
+            if tiene_mutua and numero_poliza:
+                if not verificar_mutua_paciente(numero_poliza):
+                    messages.error(request, 'El número de póliza no es válido o no pertenece a nuestra mutua.')
+                    return render(request, 'patient/register.html', {'form': form})
 
             # Solo crear perfil si no existe
+            user = form.save()
             profile, created = PatientProfile.objects.get_or_create(user=user)
             profile.name = user.username
-            profile.tiene_mutua = request.POST.get('tiene_mutua') == 'on'
-            profile.numero_poliza = request.POST.get('numero_poliza', '').strip() if profile.tiene_mutua else ''
+            profile.tiene_mutua = tiene_mutua
+            profile.numero_poliza = numero_poliza if tiene_mutua else ''
+            profile.mutua_verificada = tiene_mutua and numero_poliza and True
             profile.save()
 
             login(request, user)
@@ -152,6 +162,17 @@ def register_view(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'patient/register.html', {'form': form})
+
+def verificar_mutua_paciente(numero_poliza):
+    """Función auxiliar para verificar mutua"""
+    try:
+        api_client = MutuaAPIClient()
+        verificacion = api_client.verificar_pertenencia_mutua(numero_poliza)
+        return verificacion.get('success', False) and verificacion.get('data', {}).get('pertenece_mutua', False)
+    except Exception as e:
+        print(f"Error verificando mutua: {e}")
+        return False
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -345,6 +366,13 @@ def programar_cita(request):
     """
     if request.method == 'POST':
         form = CitaForm(request.POST)
+        """ 
+        servicio_id = request.POST.get('servicio')
+        fecha = request.POST.get('fecha')
+        hora = request.POST.get('hora')
+        # Obtener el servicio
+        servicio = get_object_or_404(Service, id=servicio_id)
+        """
         if form.is_valid():
             cita = form.save(commit=False)
             cita.usuario = request.user
@@ -373,18 +401,30 @@ def programar_cita(request):
     return render(request, 'patient/programar_cita.html', {'form': form})
 
 
+
 def mis_citas(request):
     citas = Cita.objects.all()
-
-    servicio = request.GET.get('servicio')
-    if servicio:
-        citas = citas.filter(servicio__icontains=servicio)
-
+    servicio_input = request.GET.get('servicio')
     fecha = request.GET.get('fecha')
+    servicio_invalido = False
+
+    if servicio_input:
+        # Verificamos si existe algún servicio que coincida
+        if Service.objects.filter(name__icontains=servicio_input).exists():
+            citas = citas.filter(servicio__name__icontains=servicio_input)
+        else:
+            citas = Cita.objects.none()
+            # No hay coincidencias
+            servicio_invalido = True
+
     if fecha:
         citas = citas.filter(fecha=fecha)
 
-    return render(request, 'patient/mis_citas.html', {'citas': citas})
+    return render(request, 'patient/mis_citas.html', {
+        'citas': citas,
+        'servicio_invalido': servicio_invalido
+    })
+
 def detalle_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
     return render(request, 'patient/detalle_cita.html', {'cita': cita})

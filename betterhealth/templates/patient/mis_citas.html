@@ -6,31 +6,519 @@
 <div class="appointments-container">
     <h1 class="appointments-title page-title">Mis Citas</h1>
 
-    <form method="get" class="filter-form">
-        <div class="filter-group">
-            <label for="servicio">Servicio</label>
-            <input type="text" name="servicio" id="servicio" placeholder="Filtrar por servicio" value="{{ request.GET.servicio }}">
-        </div>
-        <div class="filter-group">
-            <label for="fecha">Fecha</label>
-            <input type="date" name="fecha" id="fecha" value="{{ request.GET.fecha }}">
-        </div>
-        <button type="submit" class="button primary">Filtrar</button>
-    </form>
+    <!-- Barra de filtros horizontal -->
+    <div class="filter-container">
+        <form method="get" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="servicio">
+                        <i class="icon-service"></i>
+                        Servicio
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text"
+                               name="servicio"
+                               id="servicio"
+                               placeholder="Buscar por servicio..."
+                               value="{{ request.GET.servicio }}"
+                               autocomplete="off">
+                        <i class="search-icon"></i>
 
+                        {% if servicio_invalido %}
+                            <p style="color: #e53e3e; font-weight: 600; margin-top: 8px;">
+                                ⚠️ El servicio "{{ request.GET.servicio }}" no existe.
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label for="fecha">
+                        <i class="icon-calendar"></i>
+                        Fecha
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="date"
+                               name="fecha"
+                               id="fecha"
+                               value="{{ request.GET.fecha }}">
+                    </div>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="button primary">
+                        <i class="icon-search"></i>
+                        Buscar
+                    </button>
+                    <a href="{% url 'mis_citas' %}" class="button secondary">
+                        <i class="icon-clear"></i>
+                        Limpiar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Indicadores de filtros activos -->
+        {% if request.GET.servicio or request.GET.fecha %}
+        <div class="active-filters">
+            <span class="filter-label">Filtros activos:</span>
+            {% if request.GET.servicio %}
+                <span class="filter-tag">
+                    Servicio: {{ request.GET.servicio }}
+                    <a href="?{% if request.GET.fecha %}fecha={{ request.GET.fecha }}{% endif %}" class="remove-filter">×</a>
+                </span>
+            {% endif %}
+            {% if request.GET.fecha %}
+                <span class="filter-tag">
+                    Fecha: {{ request.GET.fecha }}
+                    <a href="?{% if request.GET.servicio %}servicio={{ request.GET.servicio }}{% endif %}" class="remove-filter">×</a>
+                </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Resultados -->
     {% if citas %}
+        <div class="results-header">
+            <p class="results-count">
+                <strong>{{ citas|length }}</strong>
+                {% if citas|length == 1 %}cita encontrada{% else %}citas encontradas{% endif %}
+            </p>
+        </div>
+
         <div class="appointments-grid">
             {% for cita in citas %}
                 <a href="{% url 'detalle_cita' cita.id %}" class="appointment-card">
-                    <div class="appointment-date">{{ cita.fecha }} a las {{ cita.hora }}</div>
+                    <div class="appointment-header">
+                        <div class="appointment-date">{{ cita.fecha }} a las {{ cita.hora }}</div>
+                    </div>
                     <div class="appointment-service">{{ cita.servicio }}</div>
                 </a>
             {% endfor %}
         </div>
     {% else %}
+        <!-- Mensaje cuando no hay resultados -->
+        {% if request.GET.servicio or request.GET.fecha %}
+        <div class="no-results filtered">
+            {% if servicio_invalido %}
+                <div class="no-results-icon">
+                    <i class="icon-search-empty"></i>
+                </div>
+                <h3>Servicio no válido</h3>
+                <p>El servicio "{{ request.GET.servicio }}" no existe. Intenta con otro término.</p>
+                <a href="{% url 'mis_citas' %}" class="button secondary">
+                    <i class="icon-clear"></i>
+                    Ver todas las citas
+                </a>
+            {% endif %}
+
+
+            </div>
+        </div>
+    {% else %}
+        <!-- No hay citas registradas -->
         <div class="empty-state">
-            <p>No tienes citas agendadas.</p>
+            <div class="empty-state-icon">
+                <i class="icon-calendar-empty"></i>
+            </div>
+            <h3>No tienes citas agendadas</h3>
+            <p>Aún no has agendado ninguna cita médica.</p>
+            <a href="{% url 'nueva_cita' %}" class="button primary">
+                <i class="icon-plus"></i>
+                Agendar mi primera cita
+            </a>
+        </div>
+        {% endif %}
         </div>
     {% endif %}
 </div>
+
+<style>
+/* Estilos para la barra de filtros horizontal con paleta BetterHealth */
+.filter-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 20px rgba(3, 34, 47, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.filter-form {
+    margin: 0;
+}
+
+.filter-row {
+    display: flex;
+    align-items: end;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    flex: 1;
+}
+
+.filter-group label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #03222f;
+    margin-bottom: 8px;
+    font-size: 14px;
+    letter-spacing: 0.025em;
+}
+
+.filter-group label i {
+    margin-right: 8px;
+    color: #005f99;
+    font-size: 16px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: white;
+    color: #03222f;
+    font-weight: 500;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: #005f99;
+    box-shadow: 0 0 0 3px rgba(0, 95, 153, 0.1);
+}
+
+.input-wrapper input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 14px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-shrink: 0;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+}
+
+.button i {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.button.primary {
+    background: #005f99;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 95, 153, 0.25);
+}
+
+.button.primary:hover {
+    background: #004c7a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 95, 153, 0.35);
+}
+
+.button.secondary {
+    background: #f55f5f;
+    color: white;
+    border: 2px solid #f55f5f;
+}
+
+.button.secondary:hover {
+    background: #e53e3e;
+    border-color: #e53e3e;
+    transform: translateY(-1px);
+}
+
+/* Filtros activos */
+.active-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #03222f;
+    font-size: 14px;
+    letter-spacing: 0.025em;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #e6f3ff 0%, #ccebff 100%);
+    color: #005f99;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #b3d9ff;
+    box-shadow: 0 2px 8px rgba(0, 95, 153, 0.15);
+}
+
+.remove-filter {
+    margin-left: 8px;
+    color: #005f99;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 95, 153, 0.1);
+    transition: all 0.2s ease;
+}
+
+.remove-filter:hover {
+    background: rgba(0, 95, 153, 0.2);
+    transform: scale(1.1);
+}
+
+/* Contador de resultados */
+.results-header {
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border-left: 4px solid #44caf50;
+}
+
+.results-count {
+    color: #03222f;
+    font-size: 16px;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Tarjetas de citas */
+.appointments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.appointment-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(3, 34, 47, 0.08);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+}
+
+.appointment-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #005f99, #44caf50);
+}
+
+.appointment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(3, 34, 47, 0.15);
+    border-color: #005f99;
+}
+
+.appointment-header {
+    margin-bottom: 16px;
+}
+
+.appointment-date {
+    font-weight: 700;
+    color: #03222f;
+    font-size: 16px;
+}
+
+.appointment-service {
+    font-size: 18px;
+    color: #005f99;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e6f3ff 0%, #ccebff 100%);
+    padding: 12px 20px;
+    border-radius: 12px;
+    display: inline-block;
+    border: 1px solid #b3d9ff;
+}
+
+/* Estados vacíos mejorados */
+.no-results,
+.empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 20px;
+    border: 2px dashed #cbd5e1;
+}
+
+.no-results-icon,
+.empty-state-icon {
+    font-size: 72px;
+    color: #94a3b8;
+    margin-bottom: 28px;
+    display: block;
+}
+
+.no-results-icon::before,
+.empty-state-icon::before {
+    content: "🔍";
+}
+
+.empty-state-icon::before {
+    content: "📅";
+}
+
+.no-results h3,
+.empty-state h3 {
+    color: #03222f;
+    margin-bottom: 16px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.no-results p,
+.empty-state p {
+    color: #64748b;
+    margin-bottom: 28px;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.search-criteria {
+    list-style: none;
+    padding: 0;
+    margin: 28px 0;
+    text-align: left;
+    display: inline-block;
+    background: white;
+    padding: 20px 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(3, 34, 47, 0.08);
+}
+
+.search-criteria li {
+    padding: 8px 0;
+    color: #03222f;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.search-criteria li strong {
+    color: #005f99;
+}
+
+.no-results-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filter-container {
+        padding: 20px;
+    }
+
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        min-width: auto;
+    }
+
+    .filter-actions {
+        flex-direction: row;
+        justify-content: center;
+        margin-top: 16px;
+    }
+
+    .button {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .active-filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .appointments-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .no-results-actions {
+        flex-direction: column;
+    }
+
+    .no-results,
+    .empty-state {
+        padding: 60px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-actions {
+        flex-direction: column;
+    }
+
+    .button {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}
