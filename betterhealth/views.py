@@ -373,36 +373,42 @@ def get_horarios_disponibles(request):
 
 @login_required
 def programar_cita(request):
-    """
-    Permite a los pacientes programar una nueva cita, asegurando disponibilidad de horario.
-    """
     if request.method == 'POST':
         form = CitaForm(request.POST)
-        """ 
-        servicio_id = request.POST.get('servicio')
-        fecha = request.POST.get('fecha')
-        hora = request.POST.get('hora')
-        # Obtener el servicio
-        servicio = get_object_or_404(Service, id=servicio_id)
-        """
         if form.is_valid():
             cita = form.save(commit=False)
             cita.usuario = request.user
 
-            # Validar que la fecha no es fin de semana
-            if cita.fecha.weekday() in [5, 6]:  # 5 = Sábado, 6 = Domingo
+            if cita.fecha.weekday() in [5, 6]:
                 messages.error(request, "Por favor, seleccione un día entre semana (lunes a viernes) para su cita.")
                 return redirect('programar_cita')
 
-            # Convertir hora string a time object
             hora_str = form.cleaned_data['hora']
             cita.hora = datetime.strptime(hora_str, '%H:%M').time()
 
-            # Calcular horarios válidos en base al servicio y la fecha
             horas_disponibles = get_precise_available_slots(cita.servicio.id, cita.fecha)
-
             if hora_str not in horas_disponibles:
                 messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
+                return redirect('programar_cita')
+
+            # Verificación de autorización por mutua
+            try:
+                profile = PatientProfile.objects.get(user=request.user)
+                servicio = cita.servicio
+
+                if servicio.requires_mutual_authorization:
+                    if not profile.tiene_mutua or not profile.mutua_verificada:
+                        messages.error(request, f"El servicio '{servicio.name}' requiere autorización de mutua, pero tu perfil no tiene una mutua verificada.")
+                        return redirect('programar_cita')
+
+                    if not servicio.included_in_mutual:
+                        messages.error(request, f"El servicio '{servicio.name}' no está autorizado por la clínica para pacientes con mutua.")
+                        return redirect('programar_cita')
+
+                    cita.autorizado_mutua = True  # Aquí podrías agregar lógica para número de autorización si aplica
+
+            except PatientProfile.DoesNotExist:
+                messages.error(request, "No se encontró tu perfil de paciente.")
                 return redirect('programar_cita')
 
             cita.save()
@@ -411,6 +417,29 @@ def programar_cita(request):
         form = CitaForm()
 
     return render(request, 'patient/programar_cita.html', {'form': form})
+
+from django.http import JsonResponse
+from .models import Service, PatientProfile
+from .utils import verificar_mutua_paciente
+
+@login_required
+def verificar_autorizacion_servicio(request):
+    servicio_id = request.GET.get('servicio_id')
+    try:
+        servicio = Service.objects.get(id=servicio_id)
+        profile = PatientProfile.objects.get(user=request.user)
+
+        if not profile.tiene_mutua or not profile.mutua_verificada:
+            return JsonResponse({'autorizado': False, 'mensaje': 'No tienes una mutua verificada.'})
+
+        if not servicio.included_in_mutual or not servicio.requires_mutual_authorization:
+            return JsonResponse({'autorizado': False, 'mensaje': f"El servicio '{servicio.name}' no está autorizado por la mutua."})
+
+        return JsonResponse({'autorizado': True, 'mensaje': f"El servicio '{servicio.name}' está autorizado por la mutua."})
+    except Service.DoesNotExist:
+        return JsonResponse({'autorizado': False, 'mensaje': 'Servicio no encontrado.'})
+    except PatientProfile.DoesNotExist:
+        return JsonResponse({'autorizado': False, 'mensaje': 'Perfil de paciente no encontrado.'})
 
 
 

@@ -13,6 +13,7 @@
                     <div class="form-group">
                         <label for="servicio">Selecciona un servicio</label>
                         <select name="servicio" id="servicio" class="form-control" required>
+                        <div id="mensaje-autorizacion" class="mt-2 text-info"></div>
                             <option value="">-- Selecciona un servicio --</option>
                             <optgroup label="Servicios cubiertos por Mutua">
                                 {% for service in form.fields.servicio.choices.0.1 %}
@@ -151,6 +152,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Cambio de servicio
     servicioSelect.addEventListener('change', cargarHorarios);
+
+    servicioSelect.addEventListener('change', function () {
+    const servicioId = this.value;
+    const mensajeDiv = document.getElementById('mensaje-autorizacion');
+    mensajeDiv.textContent = '';
+
+    if (servicioId) {
+        fetch(`/verificar-autorizacion-servicio/?servicio_id=${servicioId}`)
+            .then(response => response.json())
+            .then(data => {
+                mensajeDiv.textContent = data.mensaje;
+                mensajeDiv.className = data.autorizado ? 'mt-2 text-success' : 'mt-2 text-danger';
+            })
+            .catch(error => {
+                mensajeDiv.textContent = 'Error al verificar autorización.';
+                mensajeDiv.className = 'mt-2 text-danger';
+            });
+    }
+    });
 
     function limpiarHorarios() {
         horariosContainer.innerHTML = '<p class="text-muted">Selecciona un servicio y una fecha primero</p>';
