@@ -36,6 +36,7 @@ urlpatterns = [
     path('verificar-autorizacion-servicio/', views.verificar_autorizacion_servicio, name='verificar_autorizacion_servicio'),
 
 
+
 ]
 
 if settings.DEBUG:
