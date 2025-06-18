@@ -36,6 +36,7 @@ DEBUG = env.bool("DEBUG")                # Obtenido del .env
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
     'https://betterhealthproject.onrender.com',
+    'https://betterhealthproject-1-wofk.onrender.com', # Works for this major patch branch, to test and not conflict with production
 ]
 
 # Application definition
