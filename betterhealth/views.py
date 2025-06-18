@@ -20,7 +20,7 @@ from django.utils.dateparse import parse_date
 from .models import PatientProfile, Cita, Service, StaffProfile, Invoice
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from .utils import verificar_mutua_paciente
+from .utils import verificar_mutua_paciente, solicitar_autorizacion_mutua
 from django.db import IntegrityError
 
 
@@ -379,43 +379,97 @@ def get_horarios_disponibles(request):
 
 @login_required
 def programar_cita(request):
+    """
+    Permite a los pacientes programar una nueva cita, asegurando disponibilidad de horario
+    y autorización de mutua si es necesario.
+    """
     if request.method == 'POST':
         form = CitaForm(request.POST)
+
         if form.is_valid():
             cita = form.save(commit=False)
             cita.usuario = request.user
 
-            if cita.fecha.weekday() in [5, 6]:
+            # Validar que la fecha no es fin de semana
+            if cita.fecha.weekday() in [5, 6]:  # 5 = Sábado, 6 = Domingo
                 messages.error(request, "Por favor, seleccione un día entre semana (lunes a viernes) para su cita.")
                 return redirect('programar_cita')
 
+            # Convertir hora string a time object
             hora_str = form.cleaned_data['hora']
             cita.hora = datetime.strptime(hora_str, '%H:%M').time()
 
+            # Calcular horarios válidos en base al servicio y la fecha
             horas_disponibles = get_precise_available_slots(cita.servicio.id, cita.fecha)
+
             if hora_str not in horas_disponibles:
                 messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
                 return redirect('programar_cita')
 
-            # Verificación de autorización por mutua
+            # Obtener el perfil del paciente
             try:
-                profile = PatientProfile.objects.get(user=request.user)
-                servicio = cita.servicio
-
-                if servicio.requires_mutual_authorization:
-                    if not profile.tiene_mutua or not profile.mutua_verificada:
-                        messages.error(request, f"El servicio '{servicio.name}' requiere autorización de mutua, pero tu perfil no tiene una mutua verificada.")
-                        return redirect('programar_cita')
-
-                    if not servicio.included_in_mutual:
-                        messages.error(request, f"El servicio '{servicio.name}' no está autorizado por la clínica para pacientes con mutua.")
-                        return redirect('programar_cita')
-
-                    cita.autorizado_mutua = True  # Aquí podrías agregar lógica para número de autorización si aplica
-
+                patient_profile = PatientProfile.objects.get(user=request.user)
             except PatientProfile.DoesNotExist:
-                messages.error(request, "No se encontró tu perfil de paciente.")
+                messages.error(request, "No se encontró el perfil del paciente.")
                 return redirect('programar_cita')
+
+            # Verificar si el servicio requiere autorización de mutua
+            servicio = cita.servicio
+
+            if servicio.included_in_mutual and servicio.requires_mutual_authorization:
+                # Verificar si el paciente tiene mutua
+                if not patient_profile.tiene_mutua or not patient_profile.numero_poliza:
+                    messages.error(request,
+                                   f"El servicio '{servicio.name}' requiere autorización de mutua, pero no tiene mutua registrada.")
+                    return redirect('programar_cita')
+
+                # Verificar si la mutua está verificada
+                if not patient_profile.mutua_verificada:
+                    messages.error(request,
+                                   "Su mutua no está verificada. Por favor, verifique su mutua antes de solicitar servicios.")
+                    return redirect('programar_cita')
+
+                # Solicitar autorización a la mutua
+                from .utils import solicitar_autorizacion_mutua
+
+                resultado_autorizacion = solicitar_autorizacion_mutua(
+                    numero_poliza=patient_profile.numero_poliza,
+                    servicio_id=servicio.id,
+                    fecha_cita=cita.fecha,
+                    nombre_paciente=patient_profile.name
+                )
+
+                if resultado_autorizacion.get('error'):
+                    messages.error(request,
+                                   f"Error técnico al solicitar autorización: {resultado_autorizacion['error']}")
+                    return redirect('programar_cita')
+
+                if not resultado_autorizacion.get('autorizado', False):
+                    motivo = resultado_autorizacion.get('motivo', 'Sin motivo especificado')
+                    messages.error(request,
+                                   f"El servicio '{servicio.name}' no está autorizado por la mutua. Motivo: {motivo}")
+                    return redirect('programar_cita')
+
+                # Si está autorizado, guardar la información de autorización
+                cita.autorizado_mutua = True
+                cita.numero_autorizacion = resultado_autorizacion.get('numero_autorizacion')
+
+                # Mensaje de éxito con autorización
+                messages.success(request,
+                                 f"Servicio autorizado por la mutua. Número de autorización: {cita.numero_autorizacion}")
+
+            elif servicio.included_in_mutual and not servicio.requires_mutual_authorization:
+                # Servicio incluido en mutua pero no requiere autorización previa
+                if patient_profile.tiene_mutua and patient_profile.mutua_verificada:
+                    cita.autorizado_mutua = True
+                    messages.info(request, "Servicio cubierto por su mutua.")
+
+            # Calcular el importe según la cobertura de mutua
+            if cita.autorizado_mutua or (
+                    servicio.included_in_mutual and patient_profile.tiene_mutua and patient_profile.mutua_verificada):
+                cita.importe = 0.00  # Servicio cubierto por mutua
+            else:
+                cita.importe = servicio.price
 
             cita.save()
             return render(request, 'patient/cita_confirmacion.html', {'cita': cita})
@@ -424,28 +478,61 @@ def programar_cita(request):
 
     return render(request, 'patient/programar_cita.html', {'form': form})
 
-from django.http import JsonResponse
-from .models import Service, PatientProfile
-from .utils import verificar_mutua_paciente
-
 @login_required
 def verificar_autorizacion_servicio(request):
     servicio_id = request.GET.get('servicio_id')
+    user = request.user
+
     try:
         servicio = Service.objects.get(id=servicio_id)
-        profile = PatientProfile.objects.get(user=request.user)
-
-        if not profile.tiene_mutua or not profile.mutua_verificada:
-            return JsonResponse({'autorizado': False, 'mensaje': 'No tienes una mutua verificada.'})
-
-        if not servicio.included_in_mutual or not servicio.requires_mutual_authorization:
-            return JsonResponse({'autorizado': False, 'mensaje': f"El servicio '{servicio.name}' no está autorizado por la mutua."})
-
-        return JsonResponse({'autorizado': True, 'mensaje': f"El servicio '{servicio.name}' está autorizado por la mutua."})
     except Service.DoesNotExist:
-        return JsonResponse({'autorizado': False, 'mensaje': 'Servicio no encontrado.'})
+        return JsonResponse({'autorizado': False, 'mensaje': 'Servicio no válido.'})
+
+    try:
+        paciente = PatientProfile.objects.get(user=user)
     except PatientProfile.DoesNotExist:
         return JsonResponse({'autorizado': False, 'mensaje': 'Perfil de paciente no encontrado.'})
+
+    # CASO 1: Servicio no está cubierto por mutua
+    if not servicio.included_in_mutual:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': 'Servicio exclusivo de la clínica. Se trata como privado.'
+        })
+
+    # CASO 2: Paciente sin póliza
+    if not paciente.numero_poliza:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': 'Paciente no validado en la mutua. Se trata como servicio privado.'
+        })
+
+    # CASO 3: Verificación en la API
+    validacion = verificar_mutua_paciente(paciente.numero_poliza, paciente.name)
+    if not validacion['valido']:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': validacion['error'] or 'Paciente no válido en la mutua.'
+        })
+
+    # CASO 4: Autorización del servicio
+    resultado = solicitar_autorizacion_mutua(
+        numero_poliza=paciente.numero_poliza,
+        servicio_id=servicio_id,
+        fecha_cita=timezone.now().date(),  # o request.GET.get('fecha') si lo pasas
+        nombre_paciente=paciente.name
+    )
+
+    if resultado['autorizado']:
+        return JsonResponse({
+            'autorizado': True,
+            'mensaje': f"Servicio autorizado por la mutua. Nº autorización: {resultado['numero_autorizacion']}"
+        })
+    else:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': f"Servicio no autorizado por la mutua: {resultado['motivo']}"
+        })
 
 
 

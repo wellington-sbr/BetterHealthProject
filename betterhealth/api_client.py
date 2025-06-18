@@ -237,3 +237,22 @@ class MutuaApiClient:
             Dict con 'success' y 'data' (información de usuario) o 'error'
         """
         return self._make_request('GET', '/users/me')
+
+
+def solicitar_autorizacion_servicio(self, datos_autorizacion: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Solicita autorización para un servicio específico a la mutua.
+
+    Args:
+        datos_autorizacion: Dict con los datos necesarios para la autorización
+            - numero_poliza: Número de póliza del paciente
+            - nombre_paciente: Nombre del paciente
+            - servicio_codigo: Código del servicio
+            - servicio_nombre: Nombre del servicio
+            - fecha_cita: Fecha de la cita (formato YYYY-MM-DD)
+            - importe: Importe del servicio
+
+    Returns:
+        Dict con 'success' y 'data' o 'error'
+    """
+    return self._make_request('POST', '/autorizaciones/solicitar', data=datos_autorizacion)

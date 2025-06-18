@@ -80,7 +80,7 @@ class PatientProfileForm(forms.ModelForm):
         model = PatientProfile
         fields = ('name', 'profile_picture', 'dni')
 
-
+""" 
 class CitaForm(forms.ModelForm):
     hora = forms.ChoiceField(choices=[], label='Hora')
 
@@ -105,6 +105,49 @@ class CitaForm(forms.ModelForm):
         self.fields['servicio'].choices = grouped_choices
 
 
+        HORAS_VALIDAS = [
+            (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
+            for h in list(range(9, 13)) + list(range(15, 20))
+            for m in (0, 30)
+        ]
+        self.fields['hora'].choices = HORAS_VALIDAS
+"""
+
+
+class CitaForm(forms.ModelForm):
+    hora = forms.ChoiceField(choices=[], label='Hora')
+
+    class Meta:
+        model = Cita
+        fields = ['servicio', 'fecha', 'hora']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(CitaForm, self).__init__(*args, **kwargs)
+
+        # Servicios incluidos en mutua
+        services_included = Service.objects.filter(included_in_mutual=True)
+        services_nonincluded = Service.objects.filter(included_in_mutual=False)
+
+        # Crear opciones con información adicional sobre autorización
+        included_choices = []
+        for s in services_included:
+            label = s.name
+            if s.requires_mutual_authorization:
+                label += " (Requiere autorización previa)"
+            included_choices.append((s.id, label))
+
+        nonincluded_choices = [(s.id, s.name) for s in services_nonincluded]
+
+        grouped_choices = [
+            ("Servicios cubiertos por Mutua", included_choices),
+            ("Servicios exclusivos de la Clínica", nonincluded_choices),
+        ]
+        self.fields['servicio'].choices = grouped_choices
+
+        # Horas válidas
         HORAS_VALIDAS = [
             (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
             for h in list(range(9, 13)) + list(range(15, 20))

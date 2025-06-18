@@ -11,26 +11,28 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="servicio">Selecciona un servicio</label>
-                        <select name="servicio" id="servicio" class="form-control" required>
-                        <div id="mensaje-autorizacion" class="mt-2 text-info"></div>
-                            <option value="">-- Selecciona un servicio --</option>
-                            <optgroup label="Servicios cubiertos por Mutua">
-                                {% for service in form.fields.servicio.choices.0.1 %}
-                                    <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
-                                        {{ service.1 }}
-                                    </option>
-                                {% endfor %}
-                            </optgroup>
-                            <optgroup label="Servicios exclusivos de la Clínica">
-                                {% for service in form.fields.servicio.choices.1.1 %}
-                                    <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
-                                        {{ service.1 }}
-                                    </option>
-                                {% endfor %}
-                            </optgroup>
-                        </select>
-                    </div>
+                    <label for="servicio">Selecciona un servicio</label>
+                    <select name="servicio" id="servicio" class="form-control" required>
+                        <option value="">-- Selecciona un servicio --</option>
+                        <optgroup label="Servicios cubiertos por Mutua">
+                            {% for service in form.fields.servicio.choices.0.1 %}
+                                <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
+                                    {{ service.1 }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="Servicios privados de la cínica">
+                            {% for service in form.fields.servicio.choices.1.1 %}
+                                <option value="{{ service.0 }}" {% if form.servicio.value == service.0 %}selected{% endif %}>
+                                    {{ service.1 }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+
+                    <!--  El div de mensaje de autorización debe estar fuera del <select> y solo debe haber uno -->
+                    <div id="mensaje-autorizacion" class="mt-2 text-info"></div>
+                </div>
                 </div>
 
                 <div class="col-md-6">
@@ -115,6 +117,7 @@
 .horarios-legend {
     margin-bottom: 10px;
 }
+
 
 .disponible-legend {
     color: #007bff;
