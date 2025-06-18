@@ -16,6 +16,7 @@ from pathlib import Path
 import dj_database_url
 import os
 import environ
+from django.contrib.auth import get_user_model
 
 # ── Rutas base ──
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -179,3 +180,22 @@ LOGIN_REDIRECT_URL = 'home'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+def create_default_admin():
+    User = get_user_model()
+    username = "boss"
+    password = os.environ.get("BOSS_ADMIN_PASSWORD")
+    if not password:
+        print("Environment variable BOSS_ADMIN_PASSWORD not set. Default admin not created.")
+        return
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_superuser(username=username, password=password, email="boss@betterhealth.com")
+        print("Default admin user 'boss' created.")
+
+if os.environ.get("RUN_MAIN") == "true":
+    try:
+        import django
+        django.setup()
+        create_default_admin()
+    except Exception:
+        pass

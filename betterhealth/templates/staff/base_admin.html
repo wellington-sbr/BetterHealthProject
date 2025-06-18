@@ -19,7 +19,10 @@
                 <nav>
                     <ul>
                         <li><a href="{% url 'panel_administrativo' %}">Todas las Citas</a></li>
-                        <li><a href="{% url 'import_services' %}">Importar Servicios</a></li>
+                        {% if request.user.username == "boss" %}
+                            <li><a href="{% url 'import_services' %}">Importar Servicios</a></li>
+                            <li><a href="{% url 'register_staff' %}">Registrar Personal</a></li>
+                        {% endif %}
                         <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
                     </ul>
                 </nav>

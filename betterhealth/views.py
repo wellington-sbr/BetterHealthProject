@@ -1,7 +1,6 @@
 import uuid
 import csv
 import io
-from django.shortcuts import render
 from django.utils import timezone
 from datetime import timezone, datetime
 from decimal import Decimal
@@ -11,7 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
@@ -112,11 +111,15 @@ def staff_required(role=None):
         return _wrapped_view
     return decorator
 
+def boss_only(user):
+    return user.is_authenticated and user.username == "boss"
+
+@user_passes_test(boss_only)
 def register_staff(request):
     if request.method == 'POST':
         form = StaffCreationForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()  # Esto ya crea el User y el StaffProfile dentro del form
+            form.save()
             messages.success(request, "Nuevo miembro del personal registrado.")
             if form.cleaned_data['role'] == 'admin':
                 return redirect('panel_administrativo')
@@ -543,7 +546,7 @@ def listado_facturas(request):
         'servicios': Cita.objects.values_list('servicio', flat=True).distinct(),  # Obtener lista de servicios
     })
 
-
+@user_passes_test(boss_only)
 def import_services_view(request):
     services = Service.objects.all()
 
@@ -591,6 +594,7 @@ def import_services_view(request):
         "services": services
     })
 
+@user_passes_test(boss_only)
 def add_service_view(request):
     if request.method == "POST":
         form = ServiceForm(request.POST)
@@ -601,12 +605,14 @@ def add_service_view(request):
     return redirect("import_services")
 
 
+@user_passes_test(boss_only)
 def delete_service_view(request, service_id):
     service = Service.objects.get(id=service_id)
     service.delete()
     messages.success(request, "Servicio eliminado correctamente.")
     return redirect("import_services")
 
+@user_passes_test(boss_only)
 def export_services_csv(request):
     services = Service.objects.all()
     response = HttpResponse(content_type="text/csv")
