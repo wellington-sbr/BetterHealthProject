@@ -34,8 +34,7 @@ urlpatterns = [
     path('cita/<int:cita_id>/invoice/', views.generar_factura, name='generar_factura'),
     path('get-horarios-disponibles/', views.get_horarios_disponibles, name='get_horarios_disponibles'),
     path('verificar-autorizacion-servicio/', views.verificar_autorizacion_servicio, name='verificar_autorizacion_servicio'),
-
-
+    path('staff/profile/', views.staff_profile_view, name='staff_profile'),
 ]
 
 if settings.DEBUG:
