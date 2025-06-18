@@ -7,9 +7,16 @@
     <h1>Detalles de la Cita</h1>
 
     <div class="detail-card">
-        <p><strong>Paciente:</strong> {{ cita.paciente.name }}</p>
+        <div class="patient-info">
+            <p><strong>Paciente:</strong>
+                {% if user.patientprofile.name %}
+                    {{ user.patientprofile.name }}
+                {% else %}
+                    {{ user.username }}
+                {% endif %}
+            </p>
+        </div>
         <p><strong>Servicio:</strong> {{ cita.servicio }}</p>
-        <p><strong>Motivo:</strong> {{ cita.motivo }}</p>
         <p><strong>Fecha:</strong> {{ cita.fecha }}</p>
         <p><strong>Hora:</strong> {{ cita.hora }}</p>
     </div>

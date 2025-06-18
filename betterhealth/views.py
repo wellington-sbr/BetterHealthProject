@@ -1,10 +1,9 @@
 import uuid
 import csv
 import io
-from datetime import timezone, datetime
+from datetime import timezone, datetime, timedelta, time
 from decimal import Decimal
 from django.db.models import Count, Sum
-from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -18,6 +17,11 @@ from .forms import PatientProfileForm, CustomUserCreationForm, CitaForm, StaffCr
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.utils.dateparse import parse_date
 from .models import PatientProfile, Cita, Service, StaffProfile, Invoice
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+from .utils import verificar_mutua_paciente, solicitar_autorizacion_mutua
+from django.db import IntegrityError
+
 
 @login_required
 def admin_panel(request):
@@ -124,22 +128,52 @@ def register_staff(request):
         form = StaffCreationForm()
     return render(request, 'register_staff.html', {'form': form})
 
+
+
 @login_required
 def home(request):
     return render(request, 'patient/home.html')
+
+
 
 
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
+            tiene_mutua = request.POST.get('tiene_mutua') == 'on'
+            numero_poliza = request.POST.get('numero_poliza', '').strip()
+            nombre_usuario = form.cleaned_data.get('username', '').strip()
+
+            if tiene_mutua and numero_poliza:
+                try:
+                    verificacion = verificar_mutua_paciente(numero_poliza, nombre_usuario)
+                    if not verificacion['valido']:
+                        messages.error(request, verificacion['error'] or 'Verificación fallida')
+                        return render(request, 'patient/register.html', {'form': form})
+                except Exception as e:
+                    messages.error(request, 'Error al verificar la mutua')
+                    return render(request, 'patient/register.html', {'form': form})
+
+            # SEGUNDO: Solo crear usuario si todo está bien
             user = form.save()
 
-            # Solo crear perfil si no existe
+            # TERCERO: Crear o actualizar perfil
             profile, created = PatientProfile.objects.get_or_create(user=user)
             profile.name = user.username
-            profile.tiene_mutua = request.POST.get('tiene_mutua') == 'on'
-            profile.numero_poliza = request.POST.get('numero_poliza', '').strip() if profile.tiene_mutua else ''
+            profile.tiene_mutua = tiene_mutua
+            profile.numero_poliza = numero_poliza if tiene_mutua else ''
+
+            # Si la mutua fue verificada, guardar datos
+            if tiene_mutua and numero_poliza:
+                try:
+                    # Ya sabemos que es válida porque la verificamos arriba
+                    verificacion = verificar_mutua_paciente(numero_poliza)
+                    profile.mutua_verificada = True
+                    profile.datos_mutua = verificacion.get('datos', {})
+                except Exception:
+                    profile.mutua_verificada = False
+
             profile.save()
 
             login(request, user)
@@ -150,6 +184,7 @@ def register_view(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'patient/register.html', {'form': form})
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -215,27 +250,220 @@ def contact_view(request):
     return render(request, 'patient/contact.html')
 
 
+
+def get_precise_available_slots(servicio_id, fecha):
+    """
+    Devuelve una lista de horarios disponibles (como '%H:%M') en los que se puede agendar
+    un servicio con duración arbitraria, sin romper bloques ni desperdiciar tiempo.
+    """
+    servicio = get_object_or_404(Service, id=servicio_id)
+    duracion = timedelta(minutes=servicio.duration_minutes)
+
+    # Horarios de la clínica: 9:00-12:30 y 15:00-19:30
+    horarios_clinica = []
+
+    # Mañana: 9:00 - 12:30
+    inicio_manana = datetime.combine(fecha, time(9, 0))
+    fin_manana = datetime.combine(fecha, time(12, 30))
+    horarios_clinica.append((inicio_manana, fin_manana))
+
+    # Tarde: 15:00 - 19:30
+    inicio_tarde = datetime.combine(fecha, time(15, 0))
+    fin_tarde = datetime.combine(fecha, time(19, 30))
+    horarios_clinica.append((inicio_tarde, fin_tarde))
+
+    # Obtener todas las citas del día (no solo del mismo servicio)
+    citas = Cita.objects.filter(
+        fecha=fecha,
+        estado__in=['pendiente', 'confirmado']
+    ).select_related('servicio').order_by('hora')
+
+    # Convertir citas en bloques ocupados
+    bloques_ocupados = []
+    for cita in citas:
+        inicio = datetime.combine(fecha, cita.hora)
+        fin = inicio + timedelta(minutes=cita.servicio.duration_minutes)
+        bloques_ocupados.append((inicio, fin))
+
+    disponibles = []
+
+    # Revisar cada período de horario de la clínica
+    for inicio_periodo, fin_periodo in horarios_clinica:
+        # Filtrar bloques ocupados que están en este período
+        bloques_en_periodo = [
+            (max(inicio, inicio_periodo), min(fin, fin_periodo))
+            for inicio, fin in bloques_ocupados
+            if inicio < fin_periodo and fin > inicio_periodo
+        ]
+
+        # Ordenar bloques por hora de inicio
+        bloques_en_periodo.sort()
+
+        # Agregar un bloque al final para simplificar el algoritmo
+        bloques_en_periodo.append((fin_periodo, fin_periodo))
+
+        # Buscar huecos libres
+        actual = inicio_periodo
+
+        for inicio_ocupado, fin_ocupado in bloques_en_periodo:
+            # Buscar slots disponibles entre actual y inicio_ocupado
+            while actual + duracion <= inicio_ocupado:
+                disponibles.append(actual.strftime('%H:%M'))
+                actual += timedelta(minutes=30)  # Avanzar en bloques de 30 min
+
+            # Mover actual al final del bloque ocupado
+            actual = max(actual, fin_ocupado)
+
+    return disponibles
+
+
+def get_all_possible_slots():
+    """
+    Devuelve todos los slots posibles de la clínica en formato HH:MM
+    """
+    slots = []
+
+    # Mañana: 9:00 - 12:30
+    for h in range(9, 13):
+        for m in [0, 30]:
+            if h == 12 and m > 30:
+                break
+            slots.append(f"{h:02d}:{m:02d}")
+
+    # Tarde: 15:00 - 19:30
+    for h in range(15, 20):
+        for m in [0, 30]:
+            if h == 19 and m > 30:
+                break
+            slots.append(f"{h:02d}:{m:02d}")
+
+    return slots
+
+
+@require_GET
+def get_horarios_disponibles(request):
+    """
+    Vista AJAX que devuelve los horarios disponibles para un servicio y fecha específicos
+    """
+    servicio_id = request.GET.get('servicio')
+    fecha_str = request.GET.get('fecha')
+
+    if not servicio_id or not fecha_str:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+    try:
+        servicio = Service.objects.get(id=servicio_id)
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    except (Service.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'Parámetros inválidos'}, status=400)
+
+    # Obtener horarios disponibles usando tu función existente
+    horarios_disponibles = get_precise_available_slots(servicio_id, fecha)
+
+    # Obtener todos los slots posibles
+    todos_los_slots = get_all_possible_slots()
+
+    # Los ocupados son todos los que no están disponibles
+    horarios_ocupados = [slot for slot in todos_los_slots if slot not in horarios_disponibles]
+
+    return JsonResponse({
+        'horarios': horarios_disponibles,
+        'ocupados': horarios_ocupados
+    })
+
 @login_required
 def programar_cita(request):
     """
-    Permite a los pacientes programar una nueva cita, asegurando disponibilidad de horario.
+    Permite a los pacientes programar una nueva cita, asegurando disponibilidad de horario
+    y autorización de mutua si es necesario.
     """
     if request.method == 'POST':
         form = CitaForm(request.POST)
+
         if form.is_valid():
             cita = form.save(commit=False)
             cita.usuario = request.user
-
-            # Validar que el servicio tiene horarios disponibles
-            horarios_disponibles = get_available_slots(cita.servicio.id, cita.fecha)
-            if cita.hora.strftime('%H:%M') not in horarios_disponibles:
-                messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
-                return redirect('programar_cita')
 
             # Validar que la fecha no es fin de semana
             if cita.fecha.weekday() in [5, 6]:  # 5 = Sábado, 6 = Domingo
                 messages.error(request, "Por favor, seleccione un día entre semana (lunes a viernes) para su cita.")
                 return redirect('programar_cita')
+
+            # Convertir hora string a time object
+            hora_str = form.cleaned_data['hora']
+            cita.hora = datetime.strptime(hora_str, '%H:%M').time()
+
+            # Calcular horarios válidos en base al servicio y la fecha
+            horas_disponibles = get_precise_available_slots(cita.servicio.id, cita.fecha)
+
+            if hora_str not in horas_disponibles:
+                messages.error(request, "Este horario no está disponible. Por favor, seleccione otro.")
+                return redirect('programar_cita')
+
+            # Obtener el perfil del paciente
+            try:
+                patient_profile = PatientProfile.objects.get(user=request.user)
+            except PatientProfile.DoesNotExist:
+                messages.error(request, "No se encontró el perfil del paciente.")
+                return redirect('programar_cita')
+
+            # Verificar si el servicio requiere autorización de mutua
+            servicio = cita.servicio
+
+            if servicio.included_in_mutual and servicio.requires_mutual_authorization:
+                # Verificar si el paciente tiene mutua
+                if not patient_profile.tiene_mutua or not patient_profile.numero_poliza:
+                    messages.error(request,
+                                   f"El servicio '{servicio.name}' requiere autorización de mutua, pero no tiene mutua registrada.")
+                    return redirect('programar_cita')
+
+                # Verificar si la mutua está verificada
+                if not patient_profile.mutua_verificada:
+                    messages.error(request,
+                                   "Su mutua no está verificada. Por favor, verifique su mutua antes de solicitar servicios.")
+                    return redirect('programar_cita')
+
+                # Solicitar autorización a la mutua
+                from .utils import solicitar_autorizacion_mutua
+
+                resultado_autorizacion = solicitar_autorizacion_mutua(
+                    numero_poliza=patient_profile.numero_poliza,
+                    servicio_id=servicio.id,
+                    fecha_cita=cita.fecha,
+                    nombre_paciente=patient_profile.name
+                )
+
+                if resultado_autorizacion.get('error'):
+                    messages.error(request,
+                                   f"Error técnico al solicitar autorización: {resultado_autorizacion['error']}")
+                    return redirect('programar_cita')
+
+                if not resultado_autorizacion.get('autorizado', False):
+                    motivo = resultado_autorizacion.get('motivo', 'Sin motivo especificado')
+                    messages.error(request,
+                                   f"El servicio '{servicio.name}' no está autorizado por la mutua. Motivo: {motivo}")
+                    return redirect('programar_cita')
+
+                # Si está autorizado, guardar la información de autorización
+                cita.autorizado_mutua = True
+                cita.numero_autorizacion = resultado_autorizacion.get('numero_autorizacion')
+
+                # Mensaje de éxito con autorización
+                messages.success(request,
+                                 f"Servicio autorizado por la mutua. Número de autorización: {cita.numero_autorizacion}")
+
+            elif servicio.included_in_mutual and not servicio.requires_mutual_authorization:
+                # Servicio incluido en mutua pero no requiere autorización previa
+                if patient_profile.tiene_mutua and patient_profile.mutua_verificada:
+                    cita.autorizado_mutua = True
+                    messages.info(request, "Servicio cubierto por su mutua.")
+
+            # Calcular el importe según la cobertura de mutua
+            if cita.autorizado_mutua or (
+                    servicio.included_in_mutual and patient_profile.tiene_mutua and patient_profile.mutua_verificada):
+                cita.importe = 0.00  # Servicio cubierto por mutua
+            else:
+                cita.importe = servicio.price
 
             cita.save()
             return render(request, 'patient/cita_confirmacion.html', {'cita': cita})
@@ -244,39 +472,87 @@ def programar_cita(request):
 
     return render(request, 'patient/programar_cita.html', {'form': form})
 
-def get_available_slots(servicio_id, fecha):
-    """
-    Devuelve una lista de horarios disponibles para un servicio en una fecha específica.
-    Excluye horarios ya reservados y permite reusar citas canceladas.
-    """
-    # Obtener la duración del servicio desde la base de datos
-    servicio = get_object_or_404(Service, id=servicio_id)
-    duracion = servicio.duration_minutes
+@login_required
+def verificar_autorizacion_servicio(request):
+    servicio_id = request.GET.get('servicio_id')
+    user = request.user
 
-    # Lista de horarios posibles en un día laboral (8:00 AM - 6:00 PM)
-    horarios_disponibles = [f"{h}:00" for h in range(8, 18)]  # Horas completas
+    try:
+        servicio = Service.objects.get(id=servicio_id)
+    except Service.DoesNotExist:
+        return JsonResponse({'autorizado': False, 'mensaje': 'Servicio no válido.'})
 
-    # Buscar citas ya reservadas en esta fecha
-    citas_ocupadas = Cita.objects.filter(servicio=servicio, fecha=fecha, estado__in=['pendiente', 'confirmado'])
+    try:
+        paciente = PatientProfile.objects.get(user=user)
+    except PatientProfile.DoesNotExist:
+        return JsonResponse({'autorizado': False, 'mensaje': 'Perfil de paciente no encontrado.'})
 
-    # Excluir horarios ocupados
-    ocupados = [cita.hora.strftime('%H:%M') for cita in citas_ocupadas]
-    horarios_libres = [hora for hora in horarios_disponibles if hora not in ocupados]
+    # CASO 1: Servicio no está cubierto por mutua
+    if not servicio.included_in_mutual:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': 'Servicio exclusivo de la clínica. Se trata como privado.'
+        })
 
-    return horarios_libres
+    # CASO 2: Paciente sin póliza
+    if not paciente.numero_poliza:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': 'Paciente no validado en la mutua. Se trata como servicio privado.'
+        })
+
+    # CASO 3: Verificación en la API
+    validacion = verificar_mutua_paciente(paciente.numero_poliza, paciente.name)
+    if not validacion['valido']:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': validacion['error'] or 'Paciente no válido en la mutua.'
+        })
+
+    # CASO 4: Autorización del servicio
+    resultado = solicitar_autorizacion_mutua(
+        numero_poliza=paciente.numero_poliza,
+        servicio_id=servicio_id,
+        fecha_cita=timezone.now().date(),  # o request.GET.get('fecha') si lo pasas
+        nombre_paciente=paciente.name
+    )
+
+    if resultado['autorizado']:
+        return JsonResponse({
+            'autorizado': True,
+            'mensaje': f"Servicio autorizado por la mutua. Nº autorización: {resultado['numero_autorizacion']}"
+        })
+    else:
+        return JsonResponse({
+            'autorizado': False,
+            'mensaje': f"Servicio no autorizado por la mutua: {resultado['motivo']}"
+        })
+
+
 
 def mis_citas(request):
     citas = Cita.objects.all()
-
-    servicio = request.GET.get('servicio')
-    if servicio:
-        citas = citas.filter(servicio__icontains=servicio)
-
+    servicio_input = request.GET.get('servicio')
     fecha = request.GET.get('fecha')
+    servicio_invalido = False
+
+    if servicio_input:
+        # Verificamos si existe algún servicio que coincida
+        if Service.objects.filter(name__icontains=servicio_input).exists():
+            citas = citas.filter(servicio__name__icontains=servicio_input)
+        else:
+            citas = Cita.objects.none()
+            # No hay coincidencias
+            servicio_invalido = True
+
     if fecha:
         citas = citas.filter(fecha=fecha)
 
-    return render(request, 'patient/mis_citas.html', {'citas': citas})
+    return render(request, 'patient/mis_citas.html', {
+        'citas': citas,
+        'servicio_invalido': servicio_invalido
+    })
+
 def detalle_cita(request, cita_id):
     cita = get_object_or_404(Cita, id=cita_id)
     return render(request, 'patient/detalle_cita.html', {'cita': cita})
@@ -321,14 +597,14 @@ def reprogramar_cita(request, cita_id):
 
     if hasattr(request.user, 'staffprofile') or cita.usuario == request.user:
         if request.method == 'POST':
-            form = ReprogramarCitaForm(request.POST, instance=cita)
+            form = CitaForm(horas_disponibles=[], horas_ocupadas=[])
             if form.is_valid():
                 nueva_fecha = form.cleaned_data['fecha']
                 nueva_hora = form.cleaned_data['hora']
 
                 # Validar disponibilidad del nuevo horario
-                horarios_disponibles = get_available_slots(cita.servicio.id, nueva_fecha)
-                if nueva_hora.strftime('%H:%M') not in horarios_disponibles:
+                horas_disponibles = get_precise_available_slots(cita.servicio.id, cita.fecha)
+                if nueva_hora.strftime('%H:%M') not in horas_disponibles:
                     messages.error(request, "Este horario no está disponible. Seleccione otro.")
                     return redirect('reprogramar_cita', cita_id=cita.id)
 
@@ -341,7 +617,7 @@ def reprogramar_cita(request, cita_id):
                 messages.success(request, f"Tu cita para {cita.servicio.name} ha sido reprogramada correctamente.")
                 return redirect('detalle_cita', cita_id=cita.id)
         else:
-            form = ReprogramarCitaForm(instance=cita)
+            form = CitaForm(horas_disponibles=[], horas_ocupadas=[])
 
         return render(request, 'patient/reprogramar_cita.html', {'form': form, 'cita': cita})
 

@@ -55,6 +55,39 @@ class PatientProfileForm(forms.ModelForm):
         model = PatientProfile
         fields = ('name', 'profile_picture')
 
+""" 
+class CitaForm(forms.ModelForm):
+    hora = forms.ChoiceField(choices=[], label='Hora')
+
+    class Meta:
+        model = Cita
+        fields = ['servicio', 'fecha', 'hora']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super(CitaForm, self).__init__(*args, **kwargs)
+        services_included= Service.objects.filter(included_in_mutual=True)
+        services_nonincluded = Service.objects.filter(included_in_mutual=False)
+
+
+        grouped_choices = [
+            ("Servicios cubiertos por Mutua", [(s.id, s.name) for s in services_included]),
+            ("Servicios exclusivos de la Clínica", [(s.id, s.name) for s in services_nonincluded]),
+        ]
+        self.fields['servicio'].choices = grouped_choices
+
+
+        HORAS_VALIDAS = [
+            (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
+            for h in list(range(9, 13)) + list(range(15, 20))
+            for m in (0, 30)
+        ]
+        self.fields['hora'].choices = HORAS_VALIDAS
+"""
+
 
 class CitaForm(forms.ModelForm):
     hora = forms.ChoiceField(choices=[], label='Hora')
@@ -67,18 +100,29 @@ class CitaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        horas_ocupadas = kwargs.pop('horas_ocupadas', [])
         super(CitaForm, self).__init__(*args, **kwargs)
-        services_included= Service.objects.filter(included_in_mutual=True)
+
+        # Servicios incluidos en mutua
+        services_included = Service.objects.filter(included_in_mutual=True)
         services_nonincluded = Service.objects.filter(included_in_mutual=False)
-        self.horas_ocupadas = horas_ocupadas
+
+        # Crear opciones con información adicional sobre autorización
+        included_choices = []
+        for s in services_included:
+            label = s.name
+            if s.requires_mutual_authorization:
+                label += " (Requiere autorización previa)"
+            included_choices.append((s.id, label))
+
+        nonincluded_choices = [(s.id, s.name) for s in services_nonincluded]
 
         grouped_choices = [
-            ("Servicios cubiertos por Mutua", [(s.id, s.name) for s in services_included]),
-            ("Servicios exclusivos de la Clínica", [(s.id, s.name) for s in services_nonincluded]),
+            ("Servicios cubiertos por Mutua", included_choices),
+            ("Servicios exclusivos de la Clínica", nonincluded_choices),
         ]
         self.fields['servicio'].choices = grouped_choices
 
+        # Horas válidas
         HORAS_VALIDAS = [
             (datetime.time(h, m).strftime('%H:%M'), datetime.time(h, m).strftime('%H:%M'))
             for h in list(range(9, 13)) + list(range(15, 20))
@@ -87,12 +131,15 @@ class CitaForm(forms.ModelForm):
         self.fields['hora'].choices = HORAS_VALIDAS
 
     def clean_hora(self):
-        hora_str = self.cleaned_data['hora']
-        hora_obj = datetime.datetime.strptime(hora_str, '%H:%M').time()
-        if not ((datetime.time(9, 0) <= hora_obj < datetime.time(13, 0)) or
-                (datetime.time(15, 0) <= hora_obj < datetime.time(20, 0))):
-            raise forms.ValidationError("La hora debe estar entre 9:00–13:00 o 15:00–20:00")
-        return hora_str
+        hora = self.cleaned_data.get('hora')
+        if hora:
+            try:
+                datetime.datetime.strptime(hora, '%H:%M').time()
+                return hora
+            except ValueError:
+                raise forms.ValidationError("Formato de hora inválido")
+        return hora
+
 
     def clean_fecha(self):
         fecha = self.cleaned_data['fecha']
