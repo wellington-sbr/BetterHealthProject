@@ -782,3 +782,8 @@ def client_invoice_view(request, cita_id):
     return render(request, "financial/invoice_templates/client_invoice.html", {
         "invoice_data": invoice_data
     })
+
+@login_required
+def staff_profile_view(request):
+    staff = StaffProfile.objects.get(user=request.user)
+    return render(request, 'staff_profile.html', {'staff': staff})

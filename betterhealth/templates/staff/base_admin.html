@@ -12,15 +12,33 @@
 <body>
     <div class="admin-container">
         <aside class="sidebar">
-            <h2>Better Health</h2>
-            <nav>
-                <ul>
-                    <li><a href="{% url 'calendar_admin' %}">Calendario</a></li>
-                    <li><a href="{% url 'panel_administrativo' %}">Todas las Citas</a></li>
-                    <li><a href="{% url 'import_services' %}">Importar Servicios</a></li>
-                    <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
-                </ul>
-            </nav>
+            <div>
+                <div class="sidebar-logo" style="display: flex; justify-content: center; align-items: center; margin: 32px 0;">
+                    <img src="{% static 'logo.png' %}" alt="Better Health Logo" style="max-width: 200px; width: 100%; height: auto; display: block;">
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="{% url 'panel_administrativo' %}">Todas las Citas</a></li>
+                        <li><a href="{% url 'import_services' %}">Importar Servicios</a></li>
+                        <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="sidebar-profile">
+                <a href="{% url 'staff_profile' %}">
+                    {% if request.user.staffprofile.profile_picture %}
+                        <img src="{{ request.user.staffprofile.profile_picture.url }}" alt="Foto de perfil">
+                    {% else %}
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: #005F99; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold;">
+                            {{ request.user.staffprofile.name|first }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        <div style="font-weight: 600; color: #005F99;">{{ request.user.staffprofile.name }}</div>
+                        <div style="font-size: 13px; color: #666;">Ver perfil</div>
+                    </div>
+                </a>
+            </div>
         </aside>
 
         <main class="main-content">
