@@ -16,7 +16,6 @@ from pathlib import Path
 import dj_database_url
 import os
 import environ
-from django.contrib.auth import get_user_model
 
 # ── Rutas base ──
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -182,15 +181,37 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 def create_default_admin():
-    User = get_user_model()
+    from django.contrib.auth import get_user_model
+    from betterhealth.models import StaffProfile  
+
     username = "boss"
     password = os.environ.get("BOSS_ADMIN_PASSWORD")
     if not password:
         print("Environment variable BOSS_ADMIN_PASSWORD not set. Default admin not created.")
         return
-    if not User.objects.filter(username=username).exists():
-        User.objects.create_superuser(username=username, password=password, email="boss@betterhealth.com")
+
+    User = get_user_model()
+    user, created = User.objects.get_or_create(username=username, defaults={
+        "email": "boss@betterhealth.com",
+        "is_staff": True,
+        "is_superuser": False,
+    })
+    if created:
+        user.set_password(password)
+        user.save()
         print("Default admin user 'boss' created.")
+    else:
+        # Optionally update password if you want to reset it every time
+        pass
+
+    staff_profile, sp_created = StaffProfile.objects.get_or_create(user=user, defaults={
+        "name": "Boss",
+        "role": "admin",
+    })
+    if not sp_created and staff_profile.role != "admin":
+        staff_profile.role = "admin"
+        staff_profile.save()
+        print("StaffProfile for 'boss' updated to role 'admin'.")
 
 if os.environ.get("RUN_MAIN") == "true":
     try:
